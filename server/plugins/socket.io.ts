@@ -2,6 +2,7 @@ import type { NitroApp } from "nitropack";
 import { Server as Engine } from "engine.io";
 import { Server } from "socket.io";
 import { defineEventHandler } from "h3";
+import {Grid} from "~/utils/SinkingShipTypes";
 
 export default defineNitroPlugin((nitroApp: NitroApp) => {
     const engine = new Engine();
@@ -12,6 +13,10 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
     io.on("connection", (socket) => {
         socket.on("login", (id: {id: string}) => {
             socket.emit("loggedin", id.id);
+        });
+
+        socket.on("startGame", (grid: string) => {
+            let parsedGrid: Grid[][] = JSON.parse(grid);
         })
     });
 

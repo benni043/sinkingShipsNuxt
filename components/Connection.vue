@@ -2,6 +2,9 @@
   <div>
     <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight" style="border:1px solid #d3d3d3;"></canvas>
   </div>
+
+<!-- todo  :disabled="objects.length !== 0"-->
+  <button @click="startGame" >startGame</button>
 </template>
 
 <script lang="ts" setup>
@@ -10,12 +13,16 @@ import {type Grid, type Ship, ShipType} from "~/utils/SinkingShipTypes";
 import {socket} from "~/components/socket";
 
 socket.on("connect", () => {
-    socket.emit("login", {id: socket.id});
+  socket.emit("login", {id: socket.id});
 });
 
 socket.on("loggedin", (id) => {
-    console.log("Hello: " + id);
+  console.log("Hello: " + id);
 })
+
+function startGame() {
+  socket.emit("startGame", JSON.stringify(grid.value));
+}
 
 const canvasWidth = 800;
 const canvasHeight = 400;
@@ -29,14 +36,17 @@ let gridCopy: Ref<Grid[][] | null> = ref(null);
 
 const objects: Ref<Ship[]> = ref([]);
 
-let grid: Ref<Grid[][]> = ref(Array(gridSize).fill(undefined).map(() => Array(gridSize).fill({
-  color: "white",
-  originX: null,
-  originY: null,
-  id: null,
-  w: null,
-  h: null
-})));
+let grid: Ref<Grid[][]> = ref(Array(gridSize)
+    .fill(undefined)
+    .map(() => Array(gridSize)
+        .fill({
+          color: "white",
+          originX: null,
+          originY: null,
+          id: null,
+          w: null,
+          h: null
+        })));
 
 function createShip(type: ShipType, count: number) {
   let newShips = [];
