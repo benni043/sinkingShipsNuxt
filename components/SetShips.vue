@@ -3,13 +3,13 @@
     <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight" style="border:1px solid #d3d3d3;"></canvas>
   </div>
 
-<!-- todo  :disabled="objects.length !== 0"-->
-  <button @click="startGame" >startGame</button>
+  <!-- todo  :disabled="objects.length !== 0"-->
+  <button @click="startGame">startGame</button>
 </template>
 
 <script lang="ts" setup>
 import {ref, onMounted, type Ref} from 'vue';
-import {type Grid, type Ship, ShipType} from "~/utils/SinkingShipTypes";
+import {type Grid, HitType, type Ship, ShipType} from "~/utils/SinkingShipTypes";
 import {socket} from "~/components/socket";
 
 socket.on("connect", () => {
@@ -22,7 +22,10 @@ socket.on("loggedin", (id) => {
 
 function startGame() {
   socket.emit("startGame", JSON.stringify(grid.value));
+  emit("startGame")
 }
+
+const emit = defineEmits(["startGame"]);
 
 const canvasWidth = 800;
 const canvasHeight = 400;
@@ -41,6 +44,7 @@ let grid: Ref<Grid[][]> = ref(Array(gridSize)
     .map(() => Array(gridSize)
         .fill({
           color: "white",
+          hitType: HitType.NULL,
           originX: null,
           originY: null,
           id: null,
@@ -242,7 +246,15 @@ onMounted(() => {
       for (let di = 0; di < grid.value.length; di++) {
         for (let dj = 0; dj < grid.value[di].length; dj++) {
           if (grid.value[di][dj].id === dragObject.value!.id) {
-            grid.value[di][dj] = {color: "white", originX: null, originY: null, id: null, w: null, h: null};
+            grid.value[di][dj] = {
+              color: "white",
+              hitType: HitType.NULL,
+              originX: null,
+              originY: null,
+              id: null,
+              w: null,
+              h: null
+            };
           }
         }
       }
@@ -292,6 +304,7 @@ onMounted(() => {
           for (let dj = 0; dj < dragObject.value!.h / cellSize; dj++) {
             grid.value[i + di][j + dj] = {
               color: dragObject.value!.color,
+              hitType: HitType.NULL,
               originX: dragObject.value!.originX,
               originY: dragObject.value!.originY,
               id: dragObject.value!.id,

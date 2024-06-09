@@ -14,11 +14,22 @@ export interface Ship {
 
 export interface Grid {
     color: string,
+    hitType: HitType,
     originX: number | null,
     originY: number | null,
     id: number | null,
     w: number | null,
     h: number | null
+}
+
+export interface Cord {
+    x: number,
+    y: number
+}
+
+export interface HitResponse {
+    hit: boolean,
+    cord: Cord
 }
 
 export enum ShipType {
@@ -27,4 +38,10 @@ export enum ShipType {
     THREE,
     FOUR,
     FIVE
+}
+
+export enum HitType {
+    HIT,
+    WATER,
+    NULL
 }
