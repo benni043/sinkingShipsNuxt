@@ -15,6 +15,7 @@ export interface Ship {
 export interface Grid {
     color: string,
     hitType: HitType,
+    type: FieldType,
     originX: number | null,
     originY: number | null,
     id: number | null,
@@ -28,6 +29,7 @@ export interface Cord {
 }
 
 export interface HitResponse {
+    opponentsField: boolean,
     hit: boolean,
     cord: Cord
 }
@@ -44,4 +46,9 @@ export enum HitType {
     HIT,
     WATER,
     NULL
+}
+
+export enum FieldType {
+    SHIP,
+    WATER
 }

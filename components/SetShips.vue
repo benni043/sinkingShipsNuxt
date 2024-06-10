@@ -8,8 +8,8 @@
 </template>
 
 <script lang="ts" setup>
-import {ref, onMounted, type Ref} from 'vue';
-import {type Grid, HitType, type Ship, ShipType} from "~/utils/SinkingShipTypes";
+import {onMounted, ref, type Ref} from 'vue';
+import {FieldType, type Grid, HitType, type Ship, ShipType} from "~/utils/SinkingShipTypes";
 import {socket} from "~/components/socket";
 
 socket.on("connect", () => {
@@ -45,6 +45,7 @@ let grid: Ref<Grid[][]> = ref(Array(gridSize)
         .fill({
           color: "white",
           hitType: HitType.NULL,
+          type: HitType.WATER,
           originX: null,
           originY: null,
           id: null,
@@ -249,6 +250,7 @@ onMounted(() => {
             grid.value[di][dj] = {
               color: "white",
               hitType: HitType.NULL,
+              type: FieldType.WATER,
               originX: null,
               originY: null,
               id: null,
@@ -305,6 +307,7 @@ onMounted(() => {
             grid.value[i + di][j + dj] = {
               color: dragObject.value!.color,
               hitType: HitType.NULL,
+              type: FieldType.SHIP,
               originX: dragObject.value!.originX,
               originY: dragObject.value!.originY,
               id: dragObject.value!.id,

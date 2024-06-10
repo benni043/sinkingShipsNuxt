@@ -21,6 +21,7 @@ let grid: Ref<Grid[][]> = ref(Array(gridSize)
         .fill({
           color: "white",
           hitType: HitType.NULL,
+          type: HitType.WATER,
           originX: null,
           originY: null,
           id: null,
@@ -57,12 +58,14 @@ onMounted(() => {
 
     socket.emit("hit", {x: i, y: j} as Cord);
   });
+})
 
-  socket.on("hitResponse", (hitResponse: HitResponse) => {
+socket.on("hitResponse", (hitResponse: HitResponse) => {
+  if ((props.opponentsGrid && hitResponse.opponentsField) || (!props.opponentsGrid && !hitResponse.opponentsField)) {
     console.log(hitResponse);
 
     grid.value[hitResponse.cord.x][hitResponse.cord.y].hitType = hitResponse.hit ? HitType.HIT : HitType.WATER;
-  })
+  }
 })
 
 </script>
