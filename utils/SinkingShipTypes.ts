@@ -52,3 +52,21 @@ export enum FieldType {
     SHIP,
     WATER
 }
+
+export interface Player {
+    socketID: string,
+    gameField: Grid[][]
+}
+
+export enum GameState {
+    WAITING,
+    STARTED,
+    FINISHED
+}
+
+export interface Game {
+    player1: Player,
+    player2: Player | undefined,
+    isPlayer1Active: boolean,
+    gameStatus: GameState,
+}
