@@ -56,7 +56,7 @@ onMounted(() => {
 
     console.log("x: " + i + ", y: " + j);
 
-    socket.emit("hit", {x: i, y: j} as Cord);
+    socket.emit("hit", {x: i, y: j} as Cord, "lobby");
   });
 })
 
@@ -64,7 +64,7 @@ socket.on("hitResponse", (hitResponse: HitResponse) => {
   if ((props.opponentsGrid && hitResponse.opponentsField) || (!props.opponentsGrid && !hitResponse.opponentsField)) {
     console.log(hitResponse);
 
-    grid.value[hitResponse.cord.x][hitResponse.cord.y].hitType = hitResponse.hit ? HitType.HIT : HitType.WATER;
+    grid.value[hitResponse.cord.x][hitResponse.cord.y].type = hitResponse.fieldType;
   }
 })
 

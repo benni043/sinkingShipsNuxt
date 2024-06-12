@@ -21,7 +21,7 @@ socket.on("loggedin", (id) => {
 })
 
 function startGame() {
-  socket.emit("startGame", JSON.stringify(grid.value));
+  socket.emit("startGame", JSON.stringify(grid.value), "lobby");
   emit("startGame")
 }
 
