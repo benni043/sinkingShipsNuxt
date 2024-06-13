@@ -14,8 +14,8 @@ export interface Ship {
 
 export interface Grid {
     color: string,
-    hitType: HitType,
-    type: FieldType,
+    typeOfHit: TypeOfHit,
+    fieldType: FieldType,
     originX: number | null,
     originY: number | null,
     id: number | null,
@@ -42,7 +42,7 @@ export enum ShipType {
     FIVE
 }
 
-export enum HitType {
+export enum TypeOfHit {
     HIT,
     WATER,
     NULL
@@ -65,8 +65,11 @@ export enum GameState {
 }
 
 export interface Game {
-    player1: Player,
+    player1: Player | undefined,
     player2: Player | undefined,
     isPlayer1Active: boolean,
     gameStatus: GameState,
 }
+
+export const WATER = "blue";
+export const SHIP = "red";

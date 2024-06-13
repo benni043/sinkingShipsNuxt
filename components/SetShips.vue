@@ -9,21 +9,26 @@
 
 <script lang="ts" setup>
 import {onMounted, ref, type Ref} from 'vue';
-import {FieldType, type Grid, HitType, type Ship, ShipType} from "~/utils/SinkingShipTypes";
+import {FieldType, type Grid, TypeOfHit, type Ship, ShipType} from "~/utils/SinkingShipTypes";
 import {socket} from "~/components/socket";
 
 socket.on("connect", () => {
-  socket.emit("login", {id: socket.id});
+  console.log("logged in: " + socket.id)
 });
-
-socket.on("loggedin", (id) => {
-  console.log("Hello: " + id);
-})
 
 function startGame() {
   socket.emit("startGame", JSON.stringify(grid.value), "lobby");
-  emit("startGame")
 }
+
+socket.on("joined", () => {
+  console.log("joined")
+
+  emit("startGame")
+})
+
+socket.on("lobbyIsFull", () => {
+  console.log("this lobby is full!")
+})
 
 const emit = defineEmits(["startGame"]);
 
@@ -44,8 +49,8 @@ let grid: Ref<Grid[][]> = ref(Array(gridSize)
     .map(() => Array(gridSize)
         .fill({
           color: "white",
-          hitType: HitType.NULL,
-          type: HitType.WATER,
+          typeOfHit: TypeOfHit.NULL,
+          fieldType: FieldType.WATER,
           originX: null,
           originY: null,
           id: null,
@@ -77,28 +82,28 @@ function createShip(type: ShipType, count: number) {
         newShip.originY = cellSize / 2;
         newShip.w = cellSize;
         newShip.h = cellSize;
-        newShip.color = "gray";
+        newShip.color = "yellow";
         break;
       case ShipType.TWO:
         newShip.y = cellSize * 2 + (cellSize / 2);
         newShip.originY = cellSize * 2 + (cellSize / 2);
         newShip.w = cellSize * 2;
         newShip.h = cellSize;
-        newShip.color = "green";
+        newShip.color = "yellow";
         break;
       case ShipType.THREE:
         newShip.y = (cellSize * 3) + (cellSize * 2) - (cellSize / 2);
         newShip.originY = (cellSize * 3) + (cellSize * 2) - (cellSize / 2);
         newShip.w = cellSize * 3;
         newShip.h = cellSize;
-        newShip.color = "red";
+        newShip.color = "yellow";
         break;
       case ShipType.FOUR:
         newShip.y = cellSize * 4 + cellSize * 3 - (cellSize / 2);
         newShip.originY = cellSize * 4 + cellSize * 3 - (cellSize / 2);
         newShip.w = cellSize * 4;
         newShip.h = cellSize;
-        newShip.color = "blue";
+        newShip.color = "yellow";
         break;
       case ShipType.FIVE:
         newShip.y = cellSize * 5 + cellSize * 4 - (cellSize / 2);
@@ -249,8 +254,8 @@ onMounted(() => {
           if (grid.value[di][dj].id === dragObject.value!.id) {
             grid.value[di][dj] = {
               color: "white",
-              hitType: HitType.NULL,
-              type: FieldType.WATER,
+              typeOfHit: TypeOfHit.NULL,
+              fieldType: FieldType.WATER,
               originX: null,
               originY: null,
               id: null,
@@ -306,8 +311,8 @@ onMounted(() => {
           for (let dj = 0; dj < dragObject.value!.h / cellSize; dj++) {
             grid.value[i + di][j + dj] = {
               color: dragObject.value!.color,
-              hitType: HitType.NULL,
-              type: FieldType.SHIP,
+              typeOfHit: TypeOfHit.NULL,
+              fieldType: FieldType.SHIP,
               originX: dragObject.value!.originX,
               originY: dragObject.value!.originY,
               id: dragObject.value!.id,

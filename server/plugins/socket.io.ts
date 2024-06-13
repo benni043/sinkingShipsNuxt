@@ -2,7 +2,7 @@ import type {NitroApp} from "nitropack";
 import {Server as Engine} from "engine.io";
 import {Server} from "socket.io";
 import {defineEventHandler} from "h3";
-import {Cord, Game, GameState, Grid, HitResponse, Player} from "~/utils/SinkingShipTypes";
+import {Cord, Game, GameState, HitResponse, Player} from "~/utils/SinkingShipTypes";
 
 export default defineNitroPlugin((nitroApp: NitroApp) => {
     const engine = new Engine();
@@ -11,16 +11,24 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
     io.bind(engine);
 
     io.on("connection", (socket) => {
-        socket.on("login", (id: { id: string }) => {
-            socket.emit("loggedin", id.id);
-        });
+        socket.on("user-disconnect", async (data: { id: string, lobbyName: string }) => {
+            console.log("disconnected: " + data.id)
+            let lobby = await useStorage().getItem<Game>(data.lobbyName);
+
+            if (lobby === null) return;
+
+            if (lobby.player1 && data.id === lobby.player1.socketID) lobby.player1 = undefined;
+            if (lobby.player2 && data.id === lobby.player2.socketID) lobby.player2 = undefined;
+
+            await useStorage().setItem(data.lobbyName, lobby);
+
+            if (!lobby.player1 && !lobby.player2) await useStorage().removeItem(data.lobbyName);
+        })
 
         socket.on("startGame", async (grid: string, lobbyName: string) => {
             let player = {socketID: socket.id, gameField: JSON.parse(grid)} as Player;
 
             let lobby = await useStorage().getItem<Game>(lobbyName);
-
-            console.log(lobby)
 
             if (lobby === null) {
                 let game = {
@@ -32,59 +40,61 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
 
                 await useStorage().setItem(lobbyName, game);
             } else {
+                if (lobby.gameStatus !== GameState.WAITING) {
+                    console.log("full")
+                    socket.emit("lobbyIsFull");
+                    return;
+                }
+
                 lobby.player2 = player;
                 lobby.gameStatus = GameState.STARTED;
 
-                await useStorage().removeItem(lobbyName);
                 await useStorage().setItem(lobbyName, lobby);
             }
+
+            socket.emit("joined");
         })
 
-        socket.on("hit", async (cord: Cord, lobbyName: string) => {
-            let lobby = await useStorage().getItem<Game>(lobbyName);
+        socket.on("hit", async (data: {cord: Cord, lobbyName: string}) => {
+            let lobby = await useStorage().getItem<Game>(data.lobbyName);
 
             if (lobby === null) return;
-            if (lobby.isPlayer1Active && lobby.player1.socketID !== socket.id) return;
+            if (lobby.isPlayer1Active && lobby.player1!.socketID !== socket.id) return;
             if (!lobby.isPlayer1Active && lobby.player2!.socketID !== socket.id) return;
 
             if (lobby.isPlayer1Active) {
-                let type = lobby.player2!.gameField[cord.x][cord.y].type;
+                let type = lobby.player2!.gameField[data.cord.x][data.cord.y].fieldType;
 
-                io.to(lobby.player1.socketID).emit("hitResponse", {
+                io.to(lobby.player1!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: true,
-                    cord: cord
+                    cord: data.cord
                 } as HitResponse);
 
                 io.to(lobby.player2!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: false,
-                    cord: cord
+                    cord: data.cord
                 } as HitResponse);
-
-                console.log(0)
             } else {
-                let type = lobby.player1.gameField[cord.x][cord.y].type;
+                let type = lobby.player1!.gameField[data.cord.x][data.cord.y].fieldType;
 
                 io.to(lobby.player2!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: true,
-                    cord: cord
+                    cord: data.cord
                 } as HitResponse);
 
-                io.to(lobby.player1.socketID).emit("hitResponse", {
+                io.to(lobby.player1!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: false,
-                    cord: cord
+                    cord: data.cord
                 } as HitResponse);
-
-                console.log(1)
             }
 
             lobby.isPlayer1Active = !lobby.isPlayer1Active;
 
-            await useStorage().removeItem(lobbyName);
-            await useStorage().setItem(lobbyName, lobby);
+            await useStorage().setItem(data.lobbyName, lobby);
         })
 
     });

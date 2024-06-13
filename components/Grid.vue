@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import {onMounted, ref, type Ref} from "vue";
-import {type Cord, type Grid, type HitResponse, HitType} from "~/utils/SinkingShipTypes";
+import {
+  type Cord,
+  FieldType,
+  type HitResponse,
+  SHIP,
+  WATER,
+  TypeOfHit
+} from "~/utils/SinkingShipTypes";
 import {socket} from "~/components/socket";
 
 const props = defineProps<{
@@ -15,19 +22,18 @@ const canvas: Ref<HTMLCanvasElement | null> = ref(null);
 
 let ctx: Ref<CanvasRenderingContext2D | null> = ref(null);
 
-let grid: Ref<Grid[][]> = ref(Array(gridSize)
-    .fill(undefined)
-    .map(() => Array(gridSize)
-        .fill({
-          color: "white",
-          hitType: HitType.NULL,
-          type: HitType.WATER,
-          originX: null,
-          originY: null,
-          id: null,
-          w: null,
-          h: null
-        })));
+let grid = ref(Array.from({length: gridSize}, () =>
+    Array.from({length: gridSize}, () => ({
+      color: "white",
+      typeOfHit: TypeOfHit.NULL,
+      fieldType: FieldType.WATER,
+      originX: null,
+      originY: null,
+      id: null,
+      w: null,
+      h: null
+    }))
+));
 
 function drawGrid() {
   for (let i = 0; i < gridSize; i++) {
@@ -56,17 +62,25 @@ onMounted(() => {
 
     console.log("x: " + i + ", y: " + j);
 
-    socket.emit("hit", {x: i, y: j} as Cord, "lobby");
+    socket.emit("hit", {cord: {x: i, y: j} as Cord, lobbyName: "lobby"});
   });
 })
 
 socket.on("hitResponse", (hitResponse: HitResponse) => {
   if ((props.opponentsGrid && hitResponse.opponentsField) || (!props.opponentsGrid && !hitResponse.opponentsField)) {
-    console.log(hitResponse);
 
-    grid.value[hitResponse.cord.x][hitResponse.cord.y].type = hitResponse.fieldType;
+    grid.value[hitResponse.cord.x][hitResponse.cord.y].fieldType = hitResponse.fieldType;
+    grid.value[hitResponse.cord.x][hitResponse.cord.y].color = hitResponse.fieldType === FieldType.WATER ? WATER : SHIP;
+
+    drawGrid();
   }
 })
+
+onBeforeUnmount(() => {
+  socket.emit("user-disconnect", ({id: socket.id, lobbyName: "lobby"}))
+
+  // if (socket) socket.disconnect();
+});
 
 </script>
 
