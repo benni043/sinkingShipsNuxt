@@ -9,7 +9,7 @@
 
 <script lang="ts" setup>
 import {onMounted, ref, type Ref} from 'vue';
-import {FieldType, type Grid, TypeOfHit, type Ship, ShipType} from "~/utils/SinkingShipTypes";
+import {FieldType, type Grid, type Ship, ShipType} from "~/utils/SinkingShipTypes";
 import {socket} from "~/components/socket";
 
 socket.on("connect", () => {
@@ -51,8 +51,7 @@ let grid: Ref<Grid[][]> = ref(Array(gridSize)
     .map(() => Array(gridSize)
         .fill({
           color: "white",
-          typeOfHit: TypeOfHit.NULL,
-          fieldType: FieldType.WATER,
+          type: {fieldType: FieldType.WATER, isHit: false},
           originX: null,
           originY: null,
           id: null,
@@ -256,8 +255,7 @@ onMounted(() => {
           if (grid.value[di][dj].id === dragObject.value!.id) {
             grid.value[di][dj] = {
               color: "white",
-              typeOfHit: TypeOfHit.NULL,
-              fieldType: FieldType.WATER,
+              type: {fieldType: FieldType.WATER, isHit: false},
               originX: null,
               originY: null,
               id: null,
@@ -313,8 +311,7 @@ onMounted(() => {
           for (let dj = 0; dj < dragObject.value!.h / cellSize; dj++) {
             grid.value[i + di][j + dj] = {
               color: dragObject.value!.color,
-              typeOfHit: TypeOfHit.NULL,
-              fieldType: FieldType.SHIP,
+              type: {fieldType: FieldType.SHIP, isHit: false},
               originX: dragObject.value!.originX,
               originY: dragObject.value!.originY,
               id: dragObject.value!.id,

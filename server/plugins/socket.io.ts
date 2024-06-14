@@ -2,7 +2,7 @@ import type {NitroApp} from "nitropack";
 import {Server as Engine} from "engine.io";
 import {Server} from "socket.io";
 import {defineEventHandler} from "h3";
-import {Cord, Game, GameState, HitResponse, Player} from "~/utils/SinkingShipTypes";
+import {Cord, FieldType, Game, GameState, Grid, HitResponse, Player} from "~/utils/SinkingShipTypes";
 
 export default defineNitroPlugin((nitroApp: NitroApp) => {
     const engine = new Engine();
@@ -63,7 +63,14 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
             if (!lobby.isPlayer1Active && lobby.player2!.socketID !== socket.id) return;
 
             if (lobby.isPlayer1Active) {
-                let type = lobby.player2!.gameField[data.cord.x][data.cord.y].fieldType;
+                let type = lobby.player2!.gameField[data.cord.x][data.cord.y].type.fieldType;
+
+                if (lobby.player2!.gameField[data.cord.x][data.cord.y].type.isHit) {
+                    socket.emit("alreadyHit");
+                    return;
+                }
+
+                lobby.player2!.gameField[data.cord.x][data.cord.y].type.isHit = true;
 
                 io.to(lobby.player1!.socketID).emit("hitResponse", {
                     fieldType: type,
@@ -76,8 +83,22 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                     opponentsField: false,
                     cord: data.cord
                 } as HitResponse);
+
+                if (hasPlayerWon(lobby.player2!.gameField)) {
+                    io.to(lobby.player1!.socketID).emit("finished", lobby.player1!);
+
+                    io.to(lobby.player2!.socketID).emit("finished", lobby.player1!);
+                }
             } else {
-                let type = lobby.player1!.gameField[data.cord.x][data.cord.y].fieldType;
+                let type = lobby.player1!.gameField[data.cord.x][data.cord.y].type.fieldType;
+
+                if (lobby.player1!.gameField[data.cord.x][data.cord.y].type.isHit) {
+                    console.log("already hit 2")
+                    socket.emit("alreadyHit");
+                    return;
+                }
+
+                lobby.player1!.gameField[data.cord.x][data.cord.y].type.isHit = true;
 
                 io.to(lobby.player2!.socketID).emit("hitResponse", {
                     fieldType: type,
@@ -90,12 +111,30 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                     opponentsField: false,
                     cord: data.cord
                 } as HitResponse);
+
+                if (hasPlayerWon(lobby.player1!.gameField)) {
+                    io.to(lobby.player2!.socketID).emit("finished", lobby.player2!);
+
+                    io.to(lobby.player1!.socketID).emit("finished", lobby.player2!);
+                }
             }
 
             lobby.isPlayer1Active = !lobby.isPlayer1Active;
 
             await useStorage().setItem(data.lobbyName, lobby);
         })
+
+        function hasPlayerWon(opponentsField: Grid[][]) {
+            for (let row of opponentsField) {
+                for (let cell of row) {
+                    if (cell.type.fieldType === FieldType.SHIP && !cell.type.isHit) {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
 
     });
 

@@ -1,19 +1,15 @@
 <script setup lang="ts">
 import {onMounted, ref, type Ref} from "vue";
-import {
-  type Cord,
-  FieldType,
-  type HitResponse,
-  SHIP,
-  WATER,
-  TypeOfHit, type Grid
-} from "~/utils/SinkingShipTypes";
+import {type Cord, FieldType, type Grid, type HitResponse, type Player, SHIP, WATER} from "~/utils/SinkingShipTypes";
 import {socket} from "~/components/socket";
 
 const props = defineProps<{
   opponentsGrid: boolean;
   grid: Grid[][] | undefined;
+  lobbyName: string;
 }>()
+
+const emit = defineEmits(["endGame"]);
 
 const canvasWidth = 400;
 const canvasHeight = 400;
@@ -26,8 +22,7 @@ let ctx: Ref<CanvasRenderingContext2D | null> = ref(null);
 let grid: Ref<Grid[][]> = ref(Array.from({length: gridSize}, () =>
     Array.from({length: gridSize}, () => ({
       color: "white",
-      typeOfHit: TypeOfHit.NULL,
-      fieldType: FieldType.WATER,
+      type: {fieldType: FieldType.WATER, isHit: false},
       originX: null,
       originY: null,
       id: null,
@@ -46,6 +41,17 @@ function drawGrid() {
   }
 }
 
+function click(event: MouseEvent) {
+  let rect = canvas.value!.getBoundingClientRect();
+  let x = event.clientX - rect.left;
+  let y = event.clientY - rect.top;
+
+  let i = Math.floor(x / cellSize);
+  let j = Math.floor(y / cellSize);
+
+  socket.emit("hit", {cord: {x: i, y: j} as Cord, lobbyName: props.lobbyName});
+}
+
 onMounted(() => {
   if (props.grid) grid.value = props.grid;
 
@@ -55,29 +61,35 @@ onMounted(() => {
 
   if (!props.opponentsGrid) return
 
-  canvas.value!.addEventListener("mousedown", (event) => {
-    let rect = canvas.value!.getBoundingClientRect();
-    let x = event.clientX - rect.left;
-    let y = event.clientY - rect.top;
-
-    let i = Math.floor(x / cellSize);
-    let j = Math.floor(y / cellSize);
-
-    console.log("x: " + i + ", y: " + j);
-
-    socket.emit("hit", {cord: {x: i, y: j} as Cord, lobbyName: "lobby"});
-  });
+  canvas.value!.addEventListener("mousedown", click);
 })
 
 socket.on("hitResponse", (hitResponse: HitResponse) => {
   if ((props.opponentsGrid && hitResponse.opponentsField) || (!props.opponentsGrid && !hitResponse.opponentsField)) {
 
-    grid.value[hitResponse.cord.x][hitResponse.cord.y].fieldType = hitResponse.fieldType;
-    grid.value[hitResponse.cord.x][hitResponse.cord.y].color = hitResponse.fieldType === FieldType.WATER ? WATER : SHIP;
+    grid.value[hitResponse.cord.x][hitResponse.cord.y].type.fieldType = hitResponse.fieldType;
+    grid.value[hitResponse.cord.x][hitResponse.cord.y].type.isHit = true;
+
+    if (hitResponse.fieldType === FieldType.SHIP) {
+      grid.value[hitResponse.cord.x][hitResponse.cord.y].color = SHIP
+    } else {
+      grid.value[hitResponse.cord.x][hitResponse.cord.y].color = WATER
+    }
 
     drawGrid();
   }
 })
+
+socket.on("finished", (player: Player) => {
+  canvas.value!.removeEventListener("mousedown", click);
+
+  emit("endGame", player)
+})
+
+socket.on("alreadyHit", () => {
+  console.log("already hit")
+})
+
 
 onBeforeUnmount(() => {
   socket.emit("user-disconnect", ({id: socket.id, lobbyName: "lobby"}))
