@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import type {Ref} from "vue";
+import type {Grid} from "~/utils/SinkingShipTypes";
 
 let gameStarted: Ref<boolean> = ref(false);
+let grid: Grid[][] | undefined = undefined;
 
-function startGame() {
+function startGame(parsedGrid: Grid[][]) {
   gameStarted.value = true;
+  grid = parsedGrid;
 }
 
 function leave() {
@@ -18,8 +21,8 @@ function leave() {
   </div>
   <div v-if="gameStarted">
     <div id="fields">
-      <Grid :opponents-grid="false"></Grid>
-      <Grid :opponents-grid="true"></Grid>
+      <Grid :opponents-grid="false" :grid="grid"></Grid>
+      <Grid :opponents-grid="true" :grid="undefined"></Grid>
     </div>
 
     <button @click="leave">leave</button>

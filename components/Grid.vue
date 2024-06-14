@@ -6,12 +6,13 @@ import {
   type HitResponse,
   SHIP,
   WATER,
-  TypeOfHit
+  TypeOfHit, type Grid
 } from "~/utils/SinkingShipTypes";
 import {socket} from "~/components/socket";
 
 const props = defineProps<{
   opponentsGrid: boolean;
+  grid: Grid[][] | undefined;
 }>()
 
 const canvasWidth = 400;
@@ -22,7 +23,7 @@ const canvas: Ref<HTMLCanvasElement | null> = ref(null);
 
 let ctx: Ref<CanvasRenderingContext2D | null> = ref(null);
 
-let grid = ref(Array.from({length: gridSize}, () =>
+let grid: Ref<Grid[][]> = ref(Array.from({length: gridSize}, () =>
     Array.from({length: gridSize}, () => ({
       color: "white",
       typeOfHit: TypeOfHit.NULL,
@@ -46,6 +47,8 @@ function drawGrid() {
 }
 
 onMounted(() => {
+  if (props.grid) grid.value = props.grid;
+
   ctx.value = canvas.value!.getContext('2d');
 
   drawGrid();

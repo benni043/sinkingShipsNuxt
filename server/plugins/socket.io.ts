@@ -52,10 +52,10 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                 await useStorage().setItem(lobbyName, lobby);
             }
 
-            socket.emit("joined");
+            socket.emit("joined", grid);
         })
 
-        socket.on("hit", async (data: {cord: Cord, lobbyName: string}) => {
+        socket.on("hit", async (data: { cord: Cord, lobbyName: string }) => {
             let lobby = await useStorage().getItem<Game>(data.lobbyName);
 
             if (lobby === null) return;

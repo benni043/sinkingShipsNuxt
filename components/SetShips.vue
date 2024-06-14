@@ -20,10 +20,12 @@ function startGame() {
   socket.emit("startGame", JSON.stringify(grid.value), "lobby");
 }
 
-socket.on("joined", () => {
+socket.on("joined", (grid: string) => {
   console.log("joined")
 
-  emit("startGame")
+  let parsedGrid: Grid[][] = JSON.parse(grid);
+
+  emit("startGame", parsedGrid);
 })
 
 socket.on("lobbyIsFull", () => {
