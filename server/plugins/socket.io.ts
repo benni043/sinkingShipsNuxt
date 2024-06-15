@@ -59,7 +59,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
             let lobby = await useStorage().getItem<Game>(data.lobbyName);
 
             if (lobby === null) return;
-            if (lobby.gameStatus === GameState.FINISHED) return;
+            if (lobby.gameStatus !== GameState.STARTED) return;
             if (lobby.isPlayer1Active && lobby.player1!.socketID !== socket.id) return;
             if (!lobby.isPlayer1Active && lobby.player2!.socketID !== socket.id) return;
 

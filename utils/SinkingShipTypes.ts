@@ -39,6 +39,12 @@ export interface HitResponse {
     cord: Cord
 }
 
+export interface ShipCount {
+    shipType: ShipType,
+    count: number,
+    remaining: number,
+}
+
 export enum ShipType {
     ONE,
     TWO,
