@@ -23,13 +23,7 @@ let opponentsGrid: Ref<Grid[][]> = ref(Array.from({length: gridSize}, () =>
 ));
 
 let lobby = "lobby";
-let winner: Ref<string> = ref("");
-
-function leave() {
-  console.log("finished");
-
-  return navigateTo("/");
-}
+let winner = ref("");
 
 function click(cord: Cord) {
   socket.emit("hit", {cord: cord, lobbyName: lobby});
@@ -54,9 +48,6 @@ socket.on("hitResponse", (hitResponse: HitResponse) => {
 })
 
 socket.on("finished", (player: Player) => {
-  // canvas.value!.removeEventListener("mousedown", click);
-  console.log(player.socketID)
-
   winner.value = player.socketID;
 })
 
@@ -72,7 +63,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div v-if="winner !== ''">
-    <h1>Der Spieler: {{ winner }} hat das Spiel gewonnen!</h1>
+    <h1>{{winner}}</h1>
   </div>
 
   <div id="fields">
@@ -80,7 +71,7 @@ onBeforeUnmount(() => {
     <SimpleGrid :grid="opponentsGrid" :has-listener="true" @clicked="args => click(args)"></SimpleGrid>
   </div>
 
-  <button @click="leave">leave</button>
+  <button><nuxt-link to="/">leave</nuxt-link></button>
 </template>
 
 <style scoped>

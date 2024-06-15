@@ -59,6 +59,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
             let lobby = await useStorage().getItem<Game>(data.lobbyName);
 
             if (lobby === null) return;
+            if (lobby.gameStatus === GameState.FINISHED) return;
             if (lobby.isPlayer1Active && lobby.player1!.socketID !== socket.id) return;
             if (!lobby.isPlayer1Active && lobby.player2!.socketID !== socket.id) return;
 
@@ -88,8 +89,9 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                 } as HitResponse);
 
                 if (hasPlayerWon(lobby.player2!.gameField)) {
-                    io.to(lobby.player1!.socketID).emit("finished", lobby.player1!);
+                    lobby.gameStatus = GameState.FINISHED;
 
+                    io.to(lobby.player1!.socketID).emit("finished", lobby.player1!);
                     io.to(lobby.player2!.socketID).emit("finished", lobby.player1!);
                 }
             } else {
@@ -119,8 +121,9 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                 } as HitResponse);
 
                 if (hasPlayerWon(lobby.player1!.gameField)) {
-                    io.to(lobby.player2!.socketID).emit("finished", lobby.player2!);
+                    lobby.gameStatus = GameState.FINISHED;
 
+                    io.to(lobby.player2!.socketID).emit("finished", lobby.player2!);
                     io.to(lobby.player1!.socketID).emit("finished", lobby.player2!);
                 }
             }

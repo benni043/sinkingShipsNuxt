@@ -10,7 +10,7 @@ function startGame(parsedGrid: Grid[][]) {
 
   useMyGridStore().setGrid(parsedGrid);
 
-  return navigateTo("/game")
+  return navigateTo("/game");
 }
 
 </script>
