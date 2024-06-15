@@ -81,7 +81,7 @@ socket.on("hitResponse", (hitResponse: HitResponse) => {
 })
 
 socket.on("finished", (player: Player) => {
-  canvas.value!.removeEventListener("mousedown", click);
+  // canvas.value!.removeEventListener("mousedown", click);
 
   emit("endGame", player)
 })
@@ -90,11 +90,8 @@ socket.on("alreadyHit", () => {
   console.log("already hit")
 })
 
-
 onBeforeUnmount(() => {
   socket.emit("user-disconnect", ({id: socket.id, lobbyName: "lobby"}))
-
-  // if (socket) socket.disconnect();
 });
 
 </script>

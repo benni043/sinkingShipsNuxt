@@ -22,8 +22,8 @@ function leave() {
 }
 
 function reset() {
-  winner.value = undefined;
   gameStarted.value = false;
+  winner.value = undefined;
   grid = undefined;
 }
 </script>
