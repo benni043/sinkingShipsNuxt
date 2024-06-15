@@ -2,8 +2,8 @@ export default defineNuxtConfig({
     devtools: {
         enabled: true
     },
+    modules: ['@nuxt/devtools', '@pinia/nuxt'],
     nitro: {
-
         runtimeConfig: {
             redis: { // Default values
                 host: '',

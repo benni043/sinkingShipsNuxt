@@ -35,6 +35,7 @@ export interface Cord {
 export interface HitResponse {
     opponentsField: boolean,
     fieldType: FieldType,
+    id: number | null,
     cord: Cord
 }
 

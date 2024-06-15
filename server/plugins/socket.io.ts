@@ -64,6 +64,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
 
             if (lobby.isPlayer1Active) {
                 let type = lobby.player2!.gameField[data.cord.x][data.cord.y].type.fieldType;
+                let id = lobby.player2!.gameField[data.cord.x][data.cord.y].id!;
 
                 if (lobby.player2!.gameField[data.cord.x][data.cord.y].type.isHit) {
                     socket.emit("alreadyHit");
@@ -75,12 +76,14 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                 io.to(lobby.player1!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: true,
+                    id: id,
                     cord: data.cord
                 } as HitResponse);
 
                 io.to(lobby.player2!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: false,
+                    id: id,
                     cord: data.cord
                 } as HitResponse);
 
@@ -91,9 +94,10 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                 }
             } else {
                 let type = lobby.player1!.gameField[data.cord.x][data.cord.y].type.fieldType;
+                let id = lobby.player1!.gameField[data.cord.x][data.cord.y].id!;
 
                 if (lobby.player1!.gameField[data.cord.x][data.cord.y].type.isHit) {
-                    console.log("already hit 2")
+                    console.log("already hit")
                     socket.emit("alreadyHit");
                     return;
                 }
@@ -103,12 +107,14 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                 io.to(lobby.player2!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: true,
+                    id: id,
                     cord: data.cord
                 } as HitResponse);
 
                 io.to(lobby.player1!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: false,
+                    id: id,
                     cord: data.cord
                 } as HitResponse);
 
