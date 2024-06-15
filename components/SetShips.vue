@@ -83,35 +83,35 @@ function createShip(type: ShipType, count: number) {
         newShip.originY = cellSize / 2;
         newShip.w = cellSize;
         newShip.h = cellSize;
-        newShip.color = "yellow";
+        newShip.color = "cyan";
         break;
       case ShipType.TWO:
         newShip.y = cellSize * 2 + (cellSize / 2);
         newShip.originY = cellSize * 2 + (cellSize / 2);
         newShip.w = cellSize * 2;
         newShip.h = cellSize;
-        newShip.color = "yellow";
+        newShip.color = "cyan";
         break;
       case ShipType.THREE:
         newShip.y = (cellSize * 3) + (cellSize * 2) - (cellSize / 2);
         newShip.originY = (cellSize * 3) + (cellSize * 2) - (cellSize / 2);
         newShip.w = cellSize * 3;
         newShip.h = cellSize;
-        newShip.color = "yellow";
+        newShip.color = "cyan";
         break;
       case ShipType.FOUR:
         newShip.y = cellSize * 4 + cellSize * 3 - (cellSize / 2);
         newShip.originY = cellSize * 4 + cellSize * 3 - (cellSize / 2);
         newShip.w = cellSize * 4;
         newShip.h = cellSize;
-        newShip.color = "yellow";
+        newShip.color = "cyan";
         break;
       case ShipType.FIVE:
         newShip.y = cellSize * 5 + cellSize * 4 - (cellSize / 2);
         newShip.originY = cellSize * 5 + cellSize * 4 - (cellSize / 2);
         newShip.w = cellSize * 5;
         newShip.h = cellSize;
-        newShip.color = "yellow";
+        newShip.color = "cyan";
         break;
       default:
         console.error("invalid ship type");
@@ -133,17 +133,40 @@ function createShip(type: ShipType, count: number) {
 function drawGrid() {
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
-      if (dragObject.value && dragObject.value!.isInGrid && i * cellSize === dragObject.value!.x && j * cellSize === dragObject.value!.y) {
-        continue;
-      }
       ctx.value!.fillStyle = grid.value[i][j].color;
-      ctx.value!.fillRect(i * cellSize, j * cellSize, cellSize, cellSize);
       ctx.value!.strokeRect(i * cellSize, j * cellSize, cellSize, cellSize);
+    }
+  }
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      ctx.value!.fillStyle = grid.value[i][j].color;
+      drawShips(i, j);
     }
   }
 }
 
-function drawObjects() {
+function drawShips(x: number, y: number) {
+  const rows = grid.value.length;
+  const cols = grid.value[0].length;
+
+  const id = grid.value[x][y].id;
+
+  if (id === null) return;
+
+  const hasTopNeighbor = y > 0 && grid.value[x][y - 1].id === id;
+  const hasBottomNeighbor = y < rows - 1 && grid.value[x][y + 1].id === id;
+  const hasLeftNeighbor = x > 0 && grid.value[x - 1][y].id === id;
+  const hasRightNeighbor = x < cols - 1 && grid.value[x + 1][y].id === id;
+
+  let leftX = hasLeftNeighbor ? 0 : 5;
+  let rightX = hasRightNeighbor ? 0 : 5;
+  let topY = hasTopNeighbor ? 0 : 5;
+  let bottomY = hasBottomNeighbor ? 0 : 5;
+
+  ctx.value!.fillRect(x * cellSize + leftX, y * cellSize + topY, cellSize - leftX - rightX, cellSize - topY - bottomY);
+}
+
+function drawOuterShips() {
   objects.value.forEach(obj => {
     ctx.value!.fillStyle = obj.color;
     roundRect(ctx.value!, obj.x, obj.y, obj.w, obj.h, 10);
@@ -166,7 +189,7 @@ function redraw() {
   ctx.value!.clearRect(0, 0, canvasWidth, canvasHeight);
 
   drawGrid();
-  drawObjects();
+  drawOuterShips();
 
   if (dragObject.value) {
     ctx.value!.fillStyle = dragObject.value!.color;
@@ -176,7 +199,7 @@ function redraw() {
   }
 }
 
-function removeFromGrid(ship: Ship) {
+function removeShip(ship: Ship) {
   for (let ship1 of objects.value) {
     if (ship.id === ship1.id) {
       objects.value.splice(objects.value.indexOf(ship1), 1);
@@ -187,7 +210,7 @@ function removeFromGrid(ship: Ship) {
 function reset() {
   if (dragObject.value) {
     if (!dragObject.value!.isInGrid) {
-      removeFromGrid(dragObject.value)
+      removeShip(dragObject.value)
 
       objects.value.push({
         id: dragObject.value!.id,
@@ -320,10 +343,10 @@ onMounted(() => {
             };
           }
         }
-        removeFromGrid(dragObject.value)
+        removeShip(dragObject.value)
       } else {
         if (!dragObject.value!.isInGrid) {
-          removeFromGrid(dragObject.value)
+          removeShip(dragObject.value)
 
           objects.value.push({
             id: dragObject.value!.id,
@@ -343,7 +366,7 @@ onMounted(() => {
         }
       }
     } else {
-      removeFromGrid(dragObject.value)
+      removeShip(dragObject.value)
 
       objects.value.push({
         id: dragObject.value!.id,
