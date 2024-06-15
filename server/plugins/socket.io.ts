@@ -29,7 +29,6 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
             let player = {socketID: socket.id, gameField: JSON.parse(grid)} as Player;
 
             let lobby = await useStorage().getItem<Game>(lobbyName);
-            console.log(lobby)
 
             if (lobby === null) {
                 let game = {

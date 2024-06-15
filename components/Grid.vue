@@ -35,10 +35,36 @@ function drawGrid() {
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
       ctx.value!.fillStyle = grid.value[i][j].color;
-      ctx.value!.fillRect(i * cellSize, j * cellSize, cellSize, cellSize);
       ctx.value!.strokeRect(i * cellSize, j * cellSize, cellSize, cellSize);
     }
   }
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      ctx.value!.fillStyle = grid.value[i][j].color;
+      drawShips(i, j);
+    }
+  }
+}
+
+function drawShips(x: number, y: number) {
+  const rows = grid.value.length;
+  const cols = grid.value[0].length;
+
+  const id = grid.value[x][y].id;
+
+  if (id === null) return;
+
+  const hasTopNeighbor = y > 0 && grid.value[x][y - 1].id === id;
+  const hasBottomNeighbor = y < rows - 1 && grid.value[x][y + 1].id === id;
+  const hasLeftNeighbor = x > 0 && grid.value[x - 1][y].id === id;
+  const hasRightNeighbor = x < cols - 1 && grid.value[x + 1][y].id === id;
+
+  let leftX = hasLeftNeighbor ? 0 : 5;
+  let rightX = hasRightNeighbor ? 0 : 5;
+  let topY = hasTopNeighbor ? 0 : 5;
+  let bottomY = hasBottomNeighbor ? 0 : 5;
+
+  ctx.value!.fillRect(x * cellSize + leftX, y * cellSize + topY, cellSize - leftX - rightX, cellSize - topY - bottomY);
 }
 
 function click(event: MouseEvent) {
