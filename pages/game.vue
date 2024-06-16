@@ -4,17 +4,15 @@ import {
   type Cord,
   FieldType,
   type Grid,
-  type HitResponse,
-  type Player,
+  type HitResponse, type Names,
   SHIP, type ShipCount,
-  ShipType,
+  ShipType, type Stats,
   WATER
 } from "~/utils/SinkingShipTypes";
 import {ref, type Ref} from "vue";
 import SimpleGrid from "~/components/SimpleGrid.vue";
 import {socket} from "~/components/socket";
 import {useMyGridStore} from "~/stores/myGrid";
-import Stats from "~/components/Stats.vue";
 
 const gridSize = 10;
 
@@ -33,10 +31,13 @@ let opponentsGrid: Ref<Grid[][]> = ref(Array.from({length: gridSize}, () =>
 ));
 
 let lobby = "lobby";
-let winner = ref("");
-let currentPlayer = "test";
-let myName = "test";
-let opponentName = "test2";
+
+let currentPlayer: Ref<string> = ref("");
+let myName: Ref<string> = ref("");
+let opponentName: Ref<string> = ref("");
+
+let stats: Ref<Stats> = ref({lobby: lobby, winner: "", waterHits: -1, playTime: -1});
+let showStats: Ref<boolean> = ref(false);
 
 function click(cord: Cord) {
   socket.emit("hit", {cord: cord, lobbyName: lobby});
@@ -58,15 +59,27 @@ socket.on("hitResponse", (hitResponse: HitResponse) => {
     if (hitResponse.fieldType === FieldType.SHIP) myGrid.value![hitResponse.cord.x][hitResponse.cord.y].color = SHIP
     else myGrid.value![hitResponse.cord.x][hitResponse.cord.y].color = WATER
   }
+
+  currentPlayer.value = hitResponse.currentPlayer;
 })
 
-socket.on("finished", (player: Player) => {
-  winner.value = player.socketID;
+socket.on("start", (names: Names) => {
+  myName.value = names.me;
+  opponentName.value = names.opponent
+
+  if (names.currentPlayer) currentPlayer.value = names.currentPlayer;
+})
+
+socket.on("finished", (statistics: Stats) => {
+  stats.value = statistics;
+  showStats.value = !showStats.value
 })
 
 socket.on("alreadyHit", () => {
   console.log("already hit");
 })
+
+socket.emit("getNames", ({lobbyName: lobby}))
 
 onBeforeUnmount(() => {
   socket.emit("user-disconnect", ({id: socket.id, lobbyName: lobby}));
@@ -87,7 +100,7 @@ let shipCounts: ShipCount[] = [
     <div class="app-bar">
       <span>{{ lobby }}</span>
       <div class="button-group">
-        <button class="stats-button" :disabled="winner === ''">Statistik</button>
+        <button class="stats-button" :disabled="stats.winner === ''" @click="showStats = !showStats">Statistik</button>
         <button class="leave-button">
           <nuxt-link to="/">Leave</nuxt-link>
         </button>
@@ -120,8 +133,10 @@ let shipCounts: ShipCount[] = [
       </div>
     </div>
 
-    <div v-if="winner !== ''">
-      <Stats :water-hits="2" :winner="winner" :play-time="2"></Stats>
+    <div v-if="showStats">
+      <Stats @close="showStats = !showStats" :water-hits="stats.waterHits" :winner="stats.winner"
+             :play-time="stats.playTime"
+             :lobby="stats.lobby"></Stats>
     </div>
   </div>
 </template>
@@ -154,14 +169,14 @@ let shipCounts: ShipCount[] = [
 
 .stats-button:disabled {
   background-color: #888888;
-  cursor: default!important;
+  cursor: default !important;
 }
 
-.stats-button:not:disabled {
+.stats-button {
   background-color: blue;
 }
 
-.stats-button:hover:not:disabled {
+.stats-button:hover {
   background-color: darkblue;
 }
 

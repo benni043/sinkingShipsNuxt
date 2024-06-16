@@ -1,3 +1,5 @@
+import exp from "node:constants";
+
 export interface Ship {
     id: number,
     x: number,
@@ -36,13 +38,27 @@ export interface HitResponse {
     opponentsField: boolean,
     fieldType: FieldType,
     id: number | null,
-    cord: Cord
+    cord: Cord,
+    currentPlayer: string,
 }
 
 export interface ShipCount {
     shipType: ShipType,
     count: number,
     remaining: number,
+}
+
+export interface Stats {
+    winner: string,
+    waterHits: number,
+    playTime: number,
+    lobby: string
+}
+
+export interface Names {
+    me: string,
+    opponent: string,
+    currentPlayer: string | undefined
 }
 
 export enum ShipType {

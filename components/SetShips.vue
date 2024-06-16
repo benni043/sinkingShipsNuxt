@@ -1,12 +1,3 @@
-<template>
-  <div>
-    <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight" style="border:1px solid #d3d3d3;"></canvas>
-  </div>
-
-  <!-- todo  :disabled="objects.length !== 0"-->
-  <button @click="startGame">startGame</button>
-</template>
-
 <script lang="ts" setup>
 import {onMounted, ref, type Ref} from 'vue';
 import {FieldType, type Grid, type Ship, ShipType} from "~/utils/SinkingShipTypes";
@@ -388,3 +379,12 @@ onMounted(() => {
   });
 });
 </script>
+
+<template>
+  <div>
+    <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight" style="border:1px solid #d3d3d3;"></canvas>
+  </div>
+
+  <!-- todo  :disabled="objects.length !== 0"-->
+  <button @click="startGame">startGame</button>
+</template>

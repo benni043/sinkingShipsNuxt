@@ -1,9 +1,10 @@
 <script setup lang="ts">
 
-let props = defineProps<{
+defineProps<{
   winner: string,
   waterHits: number,
-  playTime: number
+  playTime: number,
+  lobby: string
 }>();
 
 const emit = defineEmits(["close"]);
@@ -18,7 +19,7 @@ function close() {
   <div class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
-        <h2>Schiffe Versenken - Statistik</h2>
+        <h2>{{ lobby }} - Statistik</h2>
         <button class="close-button" @click="close">X</button>
       </div>
       <div class="modal-content">

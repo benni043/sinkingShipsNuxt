@@ -2,7 +2,7 @@ import type {NitroApp} from "nitropack";
 import {Server as Engine} from "engine.io";
 import {Server} from "socket.io";
 import {defineEventHandler} from "h3";
-import {Cord, FieldType, Game, GameState, Grid, HitResponse, Player} from "~/utils/SinkingShipTypes";
+import {Cord, FieldType, Game, GameState, Grid, HitResponse, Names, Player} from "~/utils/SinkingShipTypes";
 
 export default defineNitroPlugin((nitroApp: NitroApp) => {
     const engine = new Engine();
@@ -55,6 +55,24 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
             socket.emit("joined", grid);
         })
 
+        socket.on("getNames", async (data: { lobbyName: string }) => {
+            let lobby = await useStorage().getItem<Game>(data.lobbyName);
+
+            if (lobby === null) return;
+
+            if (lobby.player1) io.to(lobby.player1?.socketID).emit("start", {
+                me: lobby.player1?.socketID,
+                opponent: lobby.player2?.socketID,
+                currentPlayer: lobby.player1.socketID
+            } as Names)
+
+            if (lobby.player2) io.to(lobby.player2?.socketID).emit("start", {
+                me: lobby.player2?.socketID,
+                opponent: lobby.player1?.socketID,
+                currentPlayer: lobby.isPlayer1Active ? lobby.player1?.socketID : lobby.player2.socketID
+            } as Names)
+        })
+
         socket.on("hit", async (data: { cord: Cord, lobbyName: string }) => {
             let lobby = await useStorage().getItem<Game>(data.lobbyName);
 
@@ -78,14 +96,16 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                     fieldType: type,
                     opponentsField: true,
                     id: id,
-                    cord: data.cord
+                    cord: data.cord,
+                    currentPlayer: lobby.player2!.socketID
                 } as HitResponse);
 
                 io.to(lobby.player2!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: false,
                     id: id,
-                    cord: data.cord
+                    cord: data.cord,
+                    currentPlayer: lobby.player2!.socketID
                 } as HitResponse);
 
                 if (hasPlayerWon(lobby.player2!.gameField)) {
@@ -110,14 +130,16 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                     fieldType: type,
                     opponentsField: true,
                     id: id,
-                    cord: data.cord
+                    cord: data.cord,
+                    currentPlayer: lobby.player1!.socketID
                 } as HitResponse);
 
                 io.to(lobby.player1!.socketID).emit("hitResponse", {
                     fieldType: type,
                     opponentsField: false,
                     id: id,
-                    cord: data.cord
+                    cord: data.cord,
+                    currentPlayer: lobby.player1!.socketID
                 } as HitResponse);
 
                 if (hasPlayerWon(lobby.player1!.gameField)) {
