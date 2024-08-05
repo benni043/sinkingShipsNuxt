@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
 import {onMounted, ref, type Ref} from "vue";
-import {type Cord, type Grid} from "~/utils/SinkingShipTypes";
+import type {Cell, Cord} from "~/utils/Types";
 
 const props = defineProps<{
   hasListener: boolean;
-  grid: Grid[][];
+  grid: Cell[][];
 }>();
 
 watch(props.grid, () => {
@@ -24,10 +24,10 @@ const ctx: Ref<CanvasRenderingContext2D | null> = ref(null);
 function drawGrid() {
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
-      ctx.value!.fillStyle = props.grid[i][j].color;
       ctx.value!.strokeRect(i * cellSize, j * cellSize, cellSize, cellSize);
     }
   }
+
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
       ctx.value!.fillStyle = props.grid[i][j].color;
@@ -42,7 +42,7 @@ function drawShips(x: number, y: number) {
 
   const id = props.grid[x][y].id;
 
-  if (id === null) return;
+  if (id === undefined) return;
 
   const hasTopNeighbor = y > 0 && props.grid[x][y - 1].id === id;
   const hasBottomNeighbor = y < rows - 1 && props.grid[x][y + 1].id === id;

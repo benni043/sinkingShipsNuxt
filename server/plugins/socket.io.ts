@@ -2,7 +2,9 @@ import type {NitroApp} from "nitropack";
 import {Server as Engine} from "engine.io";
 import {Server} from "socket.io";
 import {defineEventHandler} from "h3";
-import {Cord, FieldType, Game, GameState, Grid, HitResponse, Names, Player} from "~/utils/SinkingShipTypes";
+import {Cord, FieldType, Game, GameState, HitResponse, Names, Player} from "~/utils/Types";
+import {Cell} from "~/utils/Types";
+import {pl} from "cronstrue/dist/i18n/locales/pl";
 
 export default defineNitroPlugin((nitroApp: NitroApp) => {
     const engine = new Engine();
@@ -28,6 +30,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
         socket.on("startGame", async (grid: string, lobbyName: string) => {
             let player = {socketID: socket.id, gameField: JSON.parse(grid)} as Player;
 
+            console.log(player.gameField[0][0])
             let lobby = await useStorage().getItem<Game>(lobbyName);
 
             if (lobby === null) {
@@ -89,6 +92,8 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                     socket.emit("alreadyHit");
                     return;
                 }
+
+                console.log(type)
 
                 lobby.player2!.gameField[data.cord.x][data.cord.y].type.isHit = true;
 
@@ -155,7 +160,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
             await useStorage().setItem(data.lobbyName, lobby);
         })
 
-        function hasPlayerWon(opponentsField: Grid[][]) {
+        function hasPlayerWon(opponentsField: Cell[][]) {
             for (let row of opponentsField) {
                 for (let cell of row) {
                     if (cell.type.fieldType === FieldType.SHIP && !cell.type.isHit) {

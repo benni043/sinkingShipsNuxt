@@ -1,0 +1,7 @@
+version: '3.3'
+services:
+  sinking-ships:
+    build: .
+    container_name: sinking-ships
+    ports:
+      - "3000:3000"

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type {Ref} from "vue";
-import type {Grid} from "~/utils/SinkingShipTypes";
 import {useMyGridStore} from "~/stores/myGrid";
+import type {Cell} from "~/utils/Types";
 
 let gameStarted: Ref<boolean> = ref(false);
 
-function startGame(parsedGrid: Grid[][]) {
+function startGame(parsedGrid: Cell[][]) {
   gameStarted.value = true;
 
   useMyGridStore().setGrid(parsedGrid);

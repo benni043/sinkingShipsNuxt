@@ -1,14 +1,13 @@
 <script setup lang="ts">
 
 import {
+  type Cell,
   type Cord,
   FieldType,
-  type Grid,
-  type HitResponse, type Names,
-  SHIP, type ShipCount,
-  ShipType, type Stats,
-  WATER
-} from "~/utils/SinkingShipTypes";
+  type HitResponse, type Names, SHIP,
+  type ShipCount,
+  ShipType, type Stats, WATER,
+} from "~/utils/Types";
 import {ref, type Ref} from "vue";
 import SimpleGrid from "~/components/SimpleGrid.vue";
 import {socket} from "~/components/socket";
@@ -16,19 +15,8 @@ import {useMyGridStore} from "~/stores/myGrid";
 
 const gridSize = 10;
 
-let myGrid: Ref<Grid[][]> = ref(useMyGridStore().grid);
-
-let opponentsGrid: Ref<Grid[][]> = ref(Array.from({length: gridSize}, () =>
-    Array.from({length: gridSize}, () => ({
-      color: "white",
-      type: {fieldType: FieldType.WATER, isHit: false},
-      originX: null,
-      originY: null,
-      id: null,
-      w: null,
-      h: null
-    }))
-));
+let myGrid: Ref<Cell[][]> = ref(useMyGridStore().grid);
+let opponentsGrid: Ref<Cell[][]> = ref(initGrid());
 
 let lobby = "lobby";
 
@@ -39,6 +27,31 @@ let opponentName: Ref<string> = ref("");
 let stats: Ref<Stats> = ref({lobby: lobby, winner: "", waterHits: -1, playTime: -1});
 let showStats: Ref<boolean> = ref(false);
 
+function initGrid() {
+  let grid: Cell[][] = [];
+
+  for (let x = 0; x < gridSize; x++) {
+    grid[x] = [];
+
+    for (let y = 0; y < gridSize; y++) {
+      grid[x][y] = {
+        type: {
+          fieldType: FieldType.WATER,
+          isHit: false
+        },
+        id: undefined,
+        color: "white",
+        x: x,
+        y: y,
+        originX: x,
+        originY: y,
+      }
+    }
+  }
+
+  return grid;
+}
+
 function click(cord: Cord) {
   socket.emit("hit", {cord: cord, lobbyName: lobby});
 }
@@ -47,14 +60,14 @@ socket.on("hitResponse", (hitResponse: HitResponse) => {
   if (hitResponse.opponentsField) {
     opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].type.fieldType = hitResponse.fieldType;
     opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].type.isHit = true;
-    opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].id = hitResponse.id !== null ? hitResponse.id : -1;
+    // opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].id = hitResponse.id !== null ? hitResponse.id : -1;
 
     if (hitResponse.fieldType === FieldType.SHIP) opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].color = SHIP
     else opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].color = WATER
   } else {
     myGrid.value![hitResponse.cord.x][hitResponse.cord.y].type.fieldType = hitResponse.fieldType;
     myGrid.value![hitResponse.cord.x][hitResponse.cord.y].type.isHit = true;
-    myGrid.value[hitResponse.cord.x][hitResponse.cord.y].id = hitResponse.id !== null ? hitResponse.id : -1;
+    // myGrid.value[hitResponse.cord.x][hitResponse.cord.y].id = hitResponse.id !== null ? hitResponse.id : -1;
 
     if (hitResponse.fieldType === FieldType.SHIP) myGrid.value![hitResponse.cord.x][hitResponse.cord.y].color = SHIP
     else myGrid.value![hitResponse.cord.x][hitResponse.cord.y].color = WATER

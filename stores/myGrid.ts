@@ -1,12 +1,12 @@
 import {defineStore} from "pinia";
-import type {Grid} from "~/utils/SinkingShipTypes";
+import type {Cell} from "~/utils/Types";
 
 export const useMyGridStore = defineStore("myGrid", {
     state: () => ({
-        grid: [] as Grid[][]
+        grid: [] as Cell[][]
     }),
     actions: {
-        setGrid(newGrid: Grid[][]) {
+        setGrid(newGrid: Cell[][]) {
             this.grid = newGrid;
         },
     }

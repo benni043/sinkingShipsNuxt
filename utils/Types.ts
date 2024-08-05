@@ -1,27 +1,11 @@
-import exp from "node:constants";
-
-export interface Ship {
-    id: number,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    color: string,
-    originX: number,
-    originY: number,
-    gridPosX: number | null,
-    gridPosY: number | null,
-    isInGrid: boolean,
-}
-
-export interface Grid {
-    color: string,
-    type: Type,
-    originX: number | null,
-    originY: number | null,
-    id: number | null,
-    w: number | null,
-    h: number | null
+export interface Cell {
+    type: Type;
+    id: number | undefined;
+    color: string;
+    x: number;
+    y: number;
+    originX: number;
+    originY: number;
 }
 
 export interface Type {
@@ -76,7 +60,7 @@ export enum FieldType {
 
 export interface Player {
     socketID: string,
-    gameField: Grid[][]
+    gameField: Cell[][]
 }
 
 export enum GameState {

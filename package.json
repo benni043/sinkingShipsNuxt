@@ -7,18 +7,20 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "start": "nuxt start"
   },
   "dependencies": {
-    "@nuxt/types": "^2.17.3",
-    "@types/socket.io-client": "^3.0.0",
     "nuxt": "^3.11.2",
     "socket.io": "^4.7.5",
     "socket.io-client": "^4.7.5",
     "vue": "^3.4.27",
-    "vue-router": "^4.3.2"
+    "vue-router": "^4.3.2",
+    "pinia": "^2.1.7"
   },
   "devDependencies": {
-    "@pinia/nuxt": "^0.5.1"
+    "@pinia/nuxt": "^0.5.1",
+    "@types/socket.io-client": "^3.0.0",
+    "@nuxt/types": "^2.17.3"
   }
 }

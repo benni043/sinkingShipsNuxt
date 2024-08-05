@@ -1,20 +1,21 @@
 <script lang="ts" setup>
 import {onMounted, ref, type Ref} from 'vue';
-import {FieldType, type Grid, type Ship, ShipType} from "~/utils/SinkingShipTypes";
 import {socket} from "~/components/socket";
+import type {Cell} from "~/utils/Types";
 
 socket.on("connect", () => {
   console.log("logged in: " + socket.id)
 });
 
 function startGame() {
+  console.log(grid.value)
   socket.emit("startGame", JSON.stringify(grid.value), "lobby");
 }
 
 socket.on("joined", (grid: string) => {
   console.log("joined")
 
-  let parsedGrid: Grid[][] = JSON.parse(grid);
+  let parsedGrid: Cell[][] = JSON.parse(grid);
 
   emit("startGame", parsedGrid);
 })
@@ -25,129 +26,172 @@ socket.on("lobbyIsFull", () => {
 
 const emit = defineEmits(["startGame"]);
 
-const canvasWidth = 800;
+const canvasWidth = 400;
 const canvasHeight = 400;
 const gridSize = 10;
 const cellSize = canvasHeight / gridSize;
+
 const canvas: Ref<HTMLCanvasElement | null> = ref(null);
-
 let ctx: Ref<CanvasRenderingContext2D | null> = ref(null);
-let dragObject: Ref<Ship | null> = ref(null);
-let gridCopy: Ref<Grid[][] | null> = ref(null);
 
-const objects: Ref<Ship[]> = ref([]);
+let grid: Ref<Cell[][]> = ref([]);
 
-let grid: Ref<Grid[][]> = ref(Array(gridSize)
-    .fill(undefined)
-    .map(() => Array(gridSize)
-        .fill({
-          color: "white",
-          type: {fieldType: FieldType.WATER, isHit: false},
-          originX: null,
-          originY: null,
-          id: null,
-          w: null,
-          h: null
-        })));
+let currentCell: Cell | undefined;
+let mouseDownX: number | undefined;
+let mouseDownY: number | undefined;
 
-function createShip(type: ShipType, count: number) {
-  let newShips = [];
+function initGrid() {
+  for (let x = 0; x < gridSize; x++) {
+    grid.value[x] = [];
 
-  for (let i = 0; i < count; i++) {
-    let newShip: Ship = {
-      id: objects.value.length + newShips.length,
-      x: cellSize * gridSize + cellSize,
-      y: 0,
-      w: 0,
-      h: 0,
-      color: "",
-      originX: cellSize * gridSize + cellSize,
-      originY: 0,
-      gridPosX: null,
-      gridPosY: null,
-      isInGrid: false
-    };
-
-    switch (type) {
-      case ShipType.ONE:
-        newShip.y = cellSize / 2;
-        newShip.originY = cellSize / 2;
-        newShip.w = cellSize;
-        newShip.h = cellSize;
-        newShip.color = "cyan";
-        break;
-      case ShipType.TWO:
-        newShip.y = cellSize * 2 + (cellSize / 2);
-        newShip.originY = cellSize * 2 + (cellSize / 2);
-        newShip.w = cellSize * 2;
-        newShip.h = cellSize;
-        newShip.color = "cyan";
-        break;
-      case ShipType.THREE:
-        newShip.y = (cellSize * 3) + (cellSize * 2) - (cellSize / 2);
-        newShip.originY = (cellSize * 3) + (cellSize * 2) - (cellSize / 2);
-        newShip.w = cellSize * 3;
-        newShip.h = cellSize;
-        newShip.color = "cyan";
-        break;
-      case ShipType.FOUR:
-        newShip.y = cellSize * 4 + cellSize * 3 - (cellSize / 2);
-        newShip.originY = cellSize * 4 + cellSize * 3 - (cellSize / 2);
-        newShip.w = cellSize * 4;
-        newShip.h = cellSize;
-        newShip.color = "cyan";
-        break;
-      case ShipType.FIVE:
-        newShip.y = cellSize * 5 + cellSize * 4 - (cellSize / 2);
-        newShip.originY = cellSize * 5 + cellSize * 4 - (cellSize / 2);
-        newShip.w = cellSize * 5;
-        newShip.h = cellSize;
-        newShip.color = "cyan";
-        break;
-      default:
-        console.error("invalid ship type");
-        return;
+    for (let y = 0; y < gridSize; y++) {
+      grid.value[x][y] = {
+        type: {
+          fieldType: FieldType.WATER,
+          isHit: false
+        },
+        id: undefined,
+        color: "white",
+        x: x,
+        y: y,
+        originX: x,
+        originY: y,
+      }
     }
+  }
+}
 
-    newShips.push(newShip);
+function initShips() {
+  grid.value[0][0].id = 0;
+  grid.value[0][0].color = "green";
+  grid.value[0][0].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
   }
 
-  for (let i = 1; i < newShips.length; i++) {
-    newShips[i].x += cellSize * (newShips[i].w / cellSize * i) + (cellSize * i);
-    newShips[i].originX += cellSize * (newShips[i].w / cellSize * i) + (cellSize * i);
+  grid.value[0][1].id = 1;
+  grid.value[0][1].color = "green";
+  grid.value[0][1].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
   }
 
-  objects.value.push(...newShips);
-  redraw();
+  grid.value[1][1].id = 1;
+  grid.value[1][1].color = "green";
+  grid.value[1][1].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
+
+  grid.value[1][2].id = 1;
+  grid.value[1][2].color = "green";
+  grid.value[1][2].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
+
+  grid.value[2][2].id = 1;
+  grid.value[2][2].color = "green";
+  grid.value[2][2].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
+
+  grid.value[6][6].id = 2;
+  grid.value[6][6].color = "green";
+  grid.value[6][6].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
+
+  grid.value[5][7].id = 2;
+  grid.value[5][7].color = "green";
+  grid.value[5][7].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
+
+  grid.value[6][7].id = 2;
+  grid.value[6][7].color = "green";
+  grid.value[6][7].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
+
+  grid.value[6][8].id = 2;
+  grid.value[6][8].color = "green";
+  grid.value[6][8].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
+
+  grid.value[7][7].id = 2;
+  grid.value[7][7].color = "green";
+  grid.value[7][7].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
+
+  grid.value[0][9].id = 3;
+  grid.value[0][9].color = "green";
+  grid.value[0][9].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
+
+  grid.value[1][9].id = 3;
+  grid.value[1][9].color = "green";
+  grid.value[1][9].type = {
+    fieldType: FieldType.SHIP,
+    isHit: false
+  }
 }
 
 function drawGrid() {
-  for (let i = 0; i < gridSize; i++) {
-    for (let j = 0; j < gridSize; j++) {
-      ctx.value!.fillStyle = grid.value[i][j].color;
-      ctx.value!.strokeRect(i * cellSize, j * cellSize, cellSize, cellSize);
+  ctx.value!.clearRect(0, 0, canvasWidth, canvasHeight);
+
+  // Draw the grid
+  for (let x = 0; x < gridSize; x++) {
+    for (let y = 0; y < gridSize; y++) {
+      ctx.value!.strokeRect(x * cellSize, y * cellSize, cellSize, cellSize);
     }
   }
-  for (let i = 0; i < gridSize; i++) {
-    for (let j = 0; j < gridSize; j++) {
-      ctx.value!.fillStyle = grid.value[i][j].color;
-      drawShips(i, j);
+
+  // Draw all ships except the one being moved
+  for (let x = 0; x < gridSize; x++) {
+    for (let y = 0; y < gridSize; y++) {
+      if (grid.value[x][y] !== currentCell) {
+        ctx.value!.fillStyle = grid.value[x][y].color;
+        drawShip(x, y, grid.value[x][y].x, grid.value[x][y].y);
+      }
+    }
+  }
+
+  // Draw the currently moved ship last
+  if (currentCell) {
+    ctx.value!.fillStyle = currentCell.color;
+    for (let x = 0; x < gridSize; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        if (grid.value[x][y].id === currentCell.id) {
+          drawShip(x, y, grid.value[x][y].x, grid.value[x][y].y);
+        }
+      }
     }
   }
 }
 
-function drawShips(x: number, y: number) {
+function drawShip(idxX: number, idxY: number, x: number, y: number) {
   const rows = grid.value.length;
   const cols = grid.value[0].length;
 
-  const id = grid.value[x][y].id;
+  const id = grid.value[idxX][idxY].id;
 
-  if (id === null) return;
+  if (id === undefined) return;
 
-  const hasTopNeighbor = y > 0 && grid.value[x][y - 1].id === id;
-  const hasBottomNeighbor = y < rows - 1 && grid.value[x][y + 1].id === id;
-  const hasLeftNeighbor = x > 0 && grid.value[x - 1][y].id === id;
-  const hasRightNeighbor = x < cols - 1 && grid.value[x + 1][y].id === id;
+  const hasTopNeighbor = idxY > 0 && grid.value[idxX][idxY - 1].id === id;
+  const hasBottomNeighbor = idxY < rows - 1 && grid.value[idxX][idxY + 1].id === id;
+  const hasLeftNeighbor = idxX > 0 && grid.value[idxX - 1][idxY].id === id;
+  const hasRightNeighbor = idxX < cols - 1 && grid.value[idxX + 1][idxY].id === id;
 
   let leftX = hasLeftNeighbor ? 0 : 5;
   let rightX = hasRightNeighbor ? 0 : 5;
@@ -157,227 +201,139 @@ function drawShips(x: number, y: number) {
   ctx.value!.fillRect(x * cellSize + leftX, y * cellSize + topY, cellSize - leftX - rightX, cellSize - topY - bottomY);
 }
 
-function drawOuterShips() {
-  objects.value.forEach(obj => {
-    ctx.value!.fillStyle = obj.color;
-    roundRect(ctx.value!, obj.x, obj.y, obj.w, obj.h, 10);
-    ctx.value!.fill();
-    ctx.value!.stroke();
-  });
-}
-
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
-  ctx!.beginPath();
-  ctx!.moveTo(x + radius, y);
-  ctx!.arcTo(x + width, y, x + width, y + height, radius);
-  ctx!.arcTo(x + width, y + height, x, y + height, radius);
-  ctx!.arcTo(x, y + height, x, y, radius);
-  ctx!.arcTo(x, y, x + width, y, radius);
-  ctx!.closePath();
-}
-
-function redraw() {
-  ctx.value!.clearRect(0, 0, canvasWidth, canvasHeight);
-
-  drawGrid();
-  drawOuterShips();
-
-  if (dragObject.value) {
-    ctx.value!.fillStyle = dragObject.value!.color;
-    roundRect(ctx.value!, dragObject.value!.x, dragObject.value!.y, dragObject.value!.w, dragObject.value!.h, 10);
-    ctx.value!.fill();
-    ctx.value!.stroke();
-  }
-}
-
-function removeShip(ship: Ship) {
-  for (let ship1 of objects.value) {
-    if (ship.id === ship1.id) {
-      objects.value.splice(objects.value.indexOf(ship1), 1);
-    }
-  }
-}
-
-function reset() {
-  if (dragObject.value) {
-    if (!dragObject.value!.isInGrid) {
-      removeShip(dragObject.value)
-
-      objects.value.push({
-        id: dragObject.value!.id,
-        x: dragObject.value!.originX,
-        y: dragObject.value!.originY,
-        w: dragObject.value!.w,
-        h: dragObject.value!.h,
-        color: dragObject.value!.color,
-        originX: dragObject.value!.originX,
-        originY: dragObject.value!.originY,
-        gridPosX: null,
-        gridPosY: null,
-        isInGrid: false
-      });
-    } else if (dragObject.value!.isInGrid) {
-      grid.value = gridCopy.value!;
-    }
-
-    dragObject.value = null;
-
-    redraw();
-  }
-}
+initGrid();
+initShips();
 
 onMounted(() => {
   ctx.value = canvas.value!.getContext('2d');
 
-  createShip(ShipType.ONE, 4);
-  createShip(ShipType.TWO, 3);
-  createShip(ShipType.THREE, 2);
-  createShip(ShipType.FOUR, 1);
-  createShip(ShipType.FIVE, 1);
-
-  redraw();
+  drawGrid();
 
   canvas.value!.addEventListener("mousedown", (event) => {
-    reset();
+    //todo does not work
+
+    currentCell = undefined;
+    mouseDownX = undefined;
+    mouseDownY = undefined;
+
+    drawGrid();
 
     let rect = canvas.value!.getBoundingClientRect();
-    let x = event.clientX - rect.left;
-    let y = event.clientY - rect.top;
+    let calcX = event.clientX - rect.left;
+    let calcY = event.clientY - rect.top;
 
-    let i = Math.floor(x / cellSize);
-    let j = Math.floor(y / cellSize);
+    let x = Math.floor(calcX / cellSize);
+    let y = Math.floor(calcY / cellSize);
 
-    if (i < gridSize && j < gridSize && grid.value[i][j].id !== null) {
-      dragObject.value = {
-        id: grid.value[i][j].id!,
-        x: i * cellSize,
-        y: j * cellSize,
-        w: grid.value[i][j].w!,
-        h: grid.value[i][j].h!,
-        color: grid.value[i][j].color,
-        originX: grid.value[i][j].originX!,
-        originY: grid.value[i][j].originY!,
-        gridPosX: i,
-        gridPosY: j,
-        isInGrid: true
-      };
+    mouseDownX = x;
+    mouseDownY = y;
 
-      gridCopy.value = JSON.parse(JSON.stringify(grid.value));
+    if (grid.value[x][y].id === undefined) return;
 
-      for (let di = 0; di < grid.value.length; di++) {
-        for (let dj = 0; dj < grid.value[di].length; dj++) {
-          if (grid.value[di][dj].id === dragObject.value!.id) {
-            grid.value[di][dj] = {
-              color: "white",
-              type: {fieldType: FieldType.WATER, isHit: false},
-              originX: null,
-              originY: null,
-              id: null,
-              w: null,
-              h: null
-            };
-          }
-        }
-      }
-    } else {
-      dragObject.value = objects.value.find(obj => x > obj.x && x < obj.x + obj.w && y > obj.y && y < obj.y + obj.h)!;
-    }
-  });
+    currentCell = grid.value[x][y];
+  })
 
   canvas.value!.addEventListener("mousemove", (event) => {
-    if (dragObject.value) {
-      let rect = canvas.value!.getBoundingClientRect();
-      let x = event.clientX - rect.left;
-      let y = event.clientY - rect.top;
+    if (currentCell === undefined) return;
 
-      dragObject.value!.x = x - dragObject.value!.w / 2;
-      dragObject.value!.y = y - dragObject.value!.h / 2;
+    let rect = canvas.value!.getBoundingClientRect();
+    let calcX = event.clientX - rect.left;
+    let calcY = event.clientY - rect.top;
 
-      redraw();
+    let diffX = (calcX / cellSize - mouseDownX!) - 0.5;
+    let diffY = (calcY / cellSize - mouseDownY!) - 0.5;
+
+    for (let x1 = 0; x1 < gridSize; x1++) {
+      for (let y1 = 0; y1 < gridSize; y1++) {
+        if (grid.value[x1][y1].id !== currentCell.id) continue;
+
+        grid.value[x1][y1].x = grid.value[x1][y1].originX + diffX!;
+        grid.value[x1][y1].y = grid.value[x1][y1].originY + diffY!;
+      }
     }
-  });
 
-  canvas.value!.addEventListener("mouseup", (event) => {
-    if (!dragObject.value) return;
+    drawGrid();
+  })
 
-    let x = (event.clientX - dragObject.value!.w / 2) + (cellSize / 2);
-    let y = (event.clientY - dragObject.value!.h / 2) + (cellSize / 2);
+  canvas.value!.addEventListener("mouseup", () => {
+    if (currentCell === undefined) return;
 
-    let i = Math.floor(x / cellSize);
-    let j = Math.floor(y / cellSize);
+    let newPositions: { x: number, y: number }[] = [];
+    let isValidMove = true;
 
-    if (i < gridSize && j < gridSize && i >= 0 && j >= 0) {
-      let canMoveToGrid = true;
-      for (let di = 0; di < dragObject.value!.w / cellSize; di++) {
-        for (let dj = 0; dj < dragObject.value!.h / cellSize; dj++) {
-          if (i + di >= gridSize || j + dj >= gridSize || grid.value[i + di][j + dj].id !== null) {
-            canMoveToGrid = false;
+    for (let x = 0; x < gridSize; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        if (grid.value[x][y].id === currentCell.id) {
+          let newX = Math.floor(grid.value[x][y].x + 0.5);
+          let newY = Math.floor(grid.value[x][y].y + 0.5);
+
+          // Check if the new position is within bounds and not occupied by another ship
+          if (
+              newX < 0 || newX >= gridSize ||
+              newY < 0 || newY >= gridSize ||
+              (grid.value[newX][newY].id !== undefined && grid.value[newX][newY].id !== currentCell.id)
+          ) {
+            isValidMove = false;
             break;
           }
-        }
-        if (!canMoveToGrid) {
-          break;
+
+          newPositions.push({x: newX, y: newY});
         }
       }
+      if (!isValidMove) break;
+    }
 
-      if (canMoveToGrid) {
-        for (let di = 0; di < dragObject.value!.w / cellSize; di++) {
-          for (let dj = 0; dj < dragObject.value!.h / cellSize; dj++) {
-            grid.value[i + di][j + dj] = {
-              color: dragObject.value!.color,
-              type: {fieldType: FieldType.SHIP, isHit: false},
-              originX: dragObject.value!.originX,
-              originY: dragObject.value!.originY,
-              id: dragObject.value!.id,
-              w: dragObject.value!.w,
-              h: dragObject.value!.h
+    if (isValidMove) {
+      // Clear old positions
+      for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize; y++) {
+          if (grid.value[x][y].id === currentCell.id) {
+            grid.value[x][y] = {
+              type: {
+                fieldType: FieldType.WATER,
+                isHit: false
+              },
+              id: undefined,
+              color: "white",
+              x: x,
+              y: y,
+              originX: x,
+              originY: y,
             };
           }
         }
-        removeShip(dragObject.value)
-      } else {
-        if (!dragObject.value!.isInGrid) {
-          removeShip(dragObject.value)
+      }
 
-          objects.value.push({
-            id: dragObject.value!.id,
-            x: dragObject.value!.originX,
-            y: dragObject.value!.originY,
-            w: dragObject.value!.w,
-            h: dragObject.value!.h,
-            color: dragObject.value!.color,
-            originX: dragObject.value!.originX,
-            originY: dragObject.value!.originY,
-            gridPosX: null,
-            gridPosY: null,
-            isInGrid: false
-          });
-        } else if (dragObject.value!.isInGrid) {
-          grid.value = gridCopy.value!;
-        }
+      // Assign new positions
+      for (let pos of newPositions) {
+        grid.value[pos.x][pos.y] = {
+          ...currentCell,
+          x: pos.x,
+          y: pos.y,
+          originX: pos.x,
+          originY: pos.y,
+        };
       }
     } else {
-      removeShip(dragObject.value)
-
-      objects.value.push({
-        id: dragObject.value!.id,
-        x: dragObject.value!.originX,
-        y: dragObject.value!.originY,
-        w: dragObject.value!.w,
-        h: dragObject.value!.h,
-        color: dragObject.value!.color,
-        originX: dragObject.value!.originX,
-        originY: dragObject.value!.originY,
-        gridPosX: null,
-        gridPosY: null,
-        isInGrid: false
-      });
+      // If move is invalid, reset to original positions
+      for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize; y++) {
+          if (grid.value[x][y].id === currentCell.id) {
+            grid.value[x][y].x = grid.value[x][y].originX;
+            grid.value[x][y].y = grid.value[x][y].originY;
+          }
+        }
+      }
     }
 
-    dragObject.value = null;
-    redraw();
+    currentCell = undefined;
+    mouseDownX = undefined;
+    mouseDownY = undefined;
+
+    drawGrid();
   });
-});
+})
+
 </script>
 
 <template>
@@ -385,6 +341,5 @@ onMounted(() => {
     <canvas ref="canvas" :width="canvasWidth" :height="canvasHeight" style="border:1px solid #d3d3d3;"></canvas>
   </div>
 
-  <!-- todo  :disabled="objects.length !== 0"-->
   <button @click="startGame">startGame</button>
 </template>
