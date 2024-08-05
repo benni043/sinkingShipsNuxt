@@ -27,6 +27,14 @@ let opponentName: Ref<string> = ref("");
 let stats: Ref<Stats> = ref({lobby: lobby, winner: "", waterHits: -1, playTime: -1});
 let showStats: Ref<boolean> = ref(false);
 
+let shipCounts: ShipCount[] = [
+  {shipType: ShipType.FIVE, count: 5, remaining: 2},
+  {shipType: ShipType.FOUR, count: 4, remaining: 2},
+  {shipType: ShipType.THREE, count: 3, remaining: 2},
+  {shipType: ShipType.TWO, count: 2, remaining: 2},
+  {shipType: ShipType.ONE, count: 1, remaining: 2},
+]
+
 function initGrid() {
   let grid: Cell[][] = [];
 
@@ -56,55 +64,49 @@ function click(cord: Cord) {
   socket.emit("hit", {cord: cord, lobbyName: lobby});
 }
 
-socket.on("hitResponse", (hitResponse: HitResponse) => {
+socket.on("starting", (names: Names) => {
+  myName.value = names.me;
+  opponentName.value = names.opponent;
+  currentPlayer.value = names.currentPlayer;
+})
+
+socket.on("hitSucceeded", (hitResponse: HitResponse) => {
+  console.log(hitResponse)
+
   if (hitResponse.opponentsField) {
-    opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].type.fieldType = hitResponse.fieldType;
     opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].type.isHit = true;
-    // opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].id = hitResponse.id !== null ? hitResponse.id : -1;
+    opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].id = hitResponse.id === undefined ? -1 : hitResponse.id;
 
-    if (hitResponse.fieldType === FieldType.SHIP) opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].color = SHIP
-    else opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].color = WATER
+    if (hitResponse.fieldType === FieldType.SHIP)
+      opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].color = SHIP;
+    else
+      opponentsGrid.value[hitResponse.cord.x][hitResponse.cord.y].color = WATER;
+
   } else {
-    myGrid.value![hitResponse.cord.x][hitResponse.cord.y].type.fieldType = hitResponse.fieldType;
-    myGrid.value![hitResponse.cord.x][hitResponse.cord.y].type.isHit = true;
-    // myGrid.value[hitResponse.cord.x][hitResponse.cord.y].id = hitResponse.id !== null ? hitResponse.id : -1;
+    myGrid.value[hitResponse.cord.x][hitResponse.cord.y].type.isHit = true;
+    myGrid.value[hitResponse.cord.x][hitResponse.cord.y].id = hitResponse.id === undefined ? -1 : hitResponse.id;
 
-    if (hitResponse.fieldType === FieldType.SHIP) myGrid.value![hitResponse.cord.x][hitResponse.cord.y].color = SHIP
-    else myGrid.value![hitResponse.cord.x][hitResponse.cord.y].color = WATER
+    if (hitResponse.fieldType === FieldType.SHIP)
+      myGrid.value[hitResponse.cord.x][hitResponse.cord.y].color = SHIP;
+    else
+      myGrid.value[hitResponse.cord.x][hitResponse.cord.y].color = WATER;
+
   }
 
   currentPlayer.value = hitResponse.currentPlayer;
 })
 
-socket.on("start", (names: Names) => {
-  myName.value = names.me;
-  opponentName.value = names.opponent
-
-  if (names.currentPlayer) currentPlayer.value = names.currentPlayer;
-})
-
-socket.on("finished", (statistics: Stats) => {
-  stats.value = statistics;
-  showStats.value = !showStats.value
-})
-
 socket.on("alreadyHit", () => {
-  console.log("already hit");
+  console.log("already hit")
 })
 
-socket.emit("getNames", ({lobbyName: lobby}))
+socket.on("gameEnd", (winner: string) => {
+  stats.value.winner = winner;
+})
 
 onBeforeUnmount(() => {
   socket.emit("user-disconnect", ({id: socket.id, lobbyName: lobby}));
 });
-
-let shipCounts: ShipCount[] = [
-  {shipType: ShipType.FIVE, count: 5, remaining: 2},
-  {shipType: ShipType.FOUR, count: 4, remaining: 2},
-  {shipType: ShipType.THREE, count: 3, remaining: 2},
-  {shipType: ShipType.TWO, count: 2, remaining: 2},
-  {shipType: ShipType.ONE, count: 1, remaining: 2},
-]
 
 </script>
 

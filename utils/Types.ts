@@ -21,7 +21,7 @@ export interface Cord {
 export interface HitResponse {
     opponentsField: boolean,
     fieldType: FieldType,
-    id: number | null,
+    id: number | undefined,
     cord: Cord,
     currentPlayer: string,
 }
@@ -42,7 +42,7 @@ export interface Stats {
 export interface Names {
     me: string,
     opponent: string,
-    currentPlayer: string | undefined
+    currentPlayer: string
 }
 
 export enum ShipType {
@@ -64,8 +64,8 @@ export interface Player {
 }
 
 export enum GameState {
-    WAITING,
-    STARTED,
+    JOINING,
+    RUNNING,
     FINISHED
 }
 

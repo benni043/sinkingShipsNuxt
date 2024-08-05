@@ -9,6 +9,8 @@ const props = defineProps<{
 }>();
 
 watch(props.grid, () => {
+  console.log("updating....")
+  console.log(props.grid)
   drawGrid();
 })
 
@@ -22,6 +24,8 @@ const canvas: Ref<HTMLCanvasElement | null> = ref(null);
 const ctx: Ref<CanvasRenderingContext2D | null> = ref(null);
 
 function drawGrid() {
+  ctx.value!.clearRect(0, 0, canvasWidth, canvasHeight);
+
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
       ctx.value!.strokeRect(i * cellSize, j * cellSize, cellSize, cellSize);

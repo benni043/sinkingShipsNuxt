@@ -3,21 +3,17 @@ import {onMounted, ref, type Ref} from 'vue';
 import {socket} from "~/components/socket";
 import type {Cell} from "~/utils/Types";
 
+// for logging purposes only
 socket.on("connect", () => {
   console.log("logged in: " + socket.id)
 });
 
 function startGame() {
-  console.log(grid.value)
-  socket.emit("startGame", JSON.stringify(grid.value), "lobby");
+  socket.emit("postField", JSON.stringify(grid.value), "lobby");
 }
 
-socket.on("joined", (grid: string) => {
-  console.log("joined")
-
-  let parsedGrid: Cell[][] = JSON.parse(grid);
-
-  emit("startGame", parsedGrid);
+socket.on("postFieldSucceeded", () => {
+  emit("startGame", grid.value);
 })
 
 socket.on("lobbyIsFull", () => {
@@ -25,6 +21,8 @@ socket.on("lobbyIsFull", () => {
 })
 
 const emit = defineEmits(["startGame"]);
+
+// canvas
 
 const canvasWidth = 400;
 const canvasHeight = 400;
