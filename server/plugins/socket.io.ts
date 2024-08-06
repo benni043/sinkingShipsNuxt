@@ -77,8 +77,10 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
 
             if (lobby === null) return;
             if (lobby.gameStatus !== GameState.RUNNING) return;
-            if (lobby.isPlayer1Active && lobby.player1!.socketID !== socket.id) return;
-            if (!lobby.isPlayer1Active && lobby.player2!.socketID !== socket.id) return;
+            if ((lobby.isPlayer1Active && lobby.player1!.socketID !== socket.id) || (!lobby.isPlayer1Active && lobby.player2!.socketID !== socket.id)) {
+                socket.emit("notYourTurn");
+                return;
+            }
 
             if (lobby.isPlayer1Active) {
                 let type = lobby.player2!.gameField[data.cord.x][data.cord.y].type.fieldType;

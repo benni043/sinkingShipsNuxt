@@ -89,7 +89,11 @@ socket.on("hitSucceeded", (hitResponse: HitResponse) => {
 })
 
 socket.on("alreadyHit", () => {
-  alert("Auf dieses Feld hast du bereits geschossen!")
+  alert("Auf dieses Feld hast du bereits geschossen!");
+})
+
+socket.on("notYourTurn", () => {
+  alert("Du bist nicht an der Reihe!");
 })
 
 socket.on("gameEnd", (winner: string) => {
