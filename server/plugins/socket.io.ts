@@ -26,8 +26,8 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
             if (!lobby.player1 && !lobby.player2) await useStorage().removeItem(data.lobbyName);
         })
 
-        socket.on("postField", async (grid: string, lobbyName: string) => {
-            let player = {socketID: socket.id, gameField: JSON.parse(grid) as Cell[][]} as Player;
+        socket.on("postField", async (grid: string, lobbyName: string, userName: string) => {
+            let player = {socketID: socket.id, gameField: JSON.parse(grid) as Cell[][], username: userName} as Player;
 
             let lobby = await useStorage().getItem<Game>(lobbyName);
 
@@ -42,8 +42,12 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                 await useStorage().setItem(lobbyName, game);
             } else {
                 if (lobby.gameStatus !== GameState.JOINING) {
-                    console.log("full")
                     socket.emit("lobbyIsFull");
+                    return;
+                }
+
+                if (socket.id === lobby.player1!.socketID) {
+                    socket.emit("playerAlreadyExists");
                     return;
                 }
 
@@ -53,37 +57,19 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                 await useStorage().setItem(lobbyName, lobby);
 
                 io.to(lobby.player1!.socketID).emit("starting", {
-                    me: lobby.player1!.socketID,
-                    opponent: lobby.player2!.socketID,
-                    currentPlayer: lobby.isPlayer1Active ? lobby.player1!.socketID : lobby.player2!.socketID
+                    me: lobby.player1!.username,
+                    opponent: lobby.player2!.username,
+                    currentPlayer: lobby.isPlayer1Active ? lobby.player1!.username : lobby.player2!.username
                 } as Names)
 
                 io.to(lobby.player2!.socketID).emit("starting", {
-                    me: lobby.player2!.socketID,
-                    opponent: lobby.player1!.socketID,
-                    currentPlayer: lobby.isPlayer1Active ? lobby.player1!.socketID : lobby.player2!.socketID
+                    me: lobby.player2!.username,
+                    opponent: lobby.player1!.username,
+                    currentPlayer: lobby.isPlayer1Active ? lobby.player1!.username : lobby.player2!.username
                 } as Names)
             }
 
             socket.emit("postFieldSucceeded");
-        })
-
-        socket.on("getNames", async (data: { lobbyName: string }) => {
-            let lobby = await useStorage().getItem<Game>(data.lobbyName);
-
-            if (lobby === null) return;
-
-            if (lobby.player1) io.to(lobby.player1?.socketID).emit("start", {
-                me: lobby.player1?.socketID,
-                opponent: lobby.player2?.socketID,
-                currentPlayer: lobby.player1.socketID
-            } as Names)
-
-            if (lobby.player2) io.to(lobby.player2?.socketID).emit("start", {
-                me: lobby.player2?.socketID,
-                opponent: lobby.player1?.socketID,
-                currentPlayer: lobby.isPlayer1Active ? lobby.player1?.socketID : lobby.player2.socketID
-            } as Names)
         })
 
         socket.on("hit", async (data: { cord: Cord, lobbyName: string }) => {
@@ -111,7 +97,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                     opponentsField: true,
                     id: id,
                     cord: data.cord,
-                    currentPlayer: lobby.player2!.socketID
+                    currentPlayer: lobby.player2!.username
                 });
 
                 io.to(lobby.player2!.socketID).emit("hitSucceeded", {
@@ -119,14 +105,14 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                     opponentsField: false,
                     id: id,
                     cord: data.cord,
-                    currentPlayer: lobby.player2!.socketID
+                    currentPlayer: lobby.player2!.username
                 });
 
                 if (hasPlayerWon(lobby.player2!.gameField)) {
                     lobby.gameStatus = GameState.FINISHED;
 
-                    io.to(lobby.player1!.socketID).emit("gameEnd", lobby.player1!);
-                    io.to(lobby.player2!.socketID).emit("gameEnd", lobby.player1!);
+                    io.to(lobby.player1!.socketID).emit("gameEnd", lobby.player1!.username);
+                    io.to(lobby.player2!.socketID).emit("gameEnd", lobby.player1!.username);
                 }
             } else {
                 let type = lobby.player1!.gameField[data.cord.x][data.cord.y].type.fieldType;
@@ -145,7 +131,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                     opponentsField: true,
                     id: id,
                     cord: data.cord,
-                    currentPlayer: lobby.player1!.socketID
+                    currentPlayer: lobby.player1!.username
                 } as HitResponse);
 
                 io.to(lobby.player1!.socketID).emit("hitSucceeded", {
@@ -153,14 +139,14 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
                     opponentsField: false,
                     id: id,
                     cord: data.cord,
-                    currentPlayer: lobby.player1!.socketID
+                    currentPlayer: lobby.player1!.username
                 } as HitResponse);
 
                 if (hasPlayerWon(lobby.player1!.gameField)) {
                     lobby.gameStatus = GameState.FINISHED;
 
-                    io.to(lobby.player2!.socketID).emit("gameEnd", lobby.player2!);
-                    io.to(lobby.player1!.socketID).emit("gameEnd", lobby.player2!);
+                    io.to(lobby.player2!.socketID).emit("gameEnd", lobby.player2!.username);
+                    io.to(lobby.player1!.socketID).emit("gameEnd", lobby.player2!.username);
                 }
             }
 

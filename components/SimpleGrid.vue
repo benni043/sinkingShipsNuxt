@@ -9,8 +9,6 @@ const props = defineProps<{
 }>();
 
 watch(props.grid, () => {
-  console.log("updating....")
-  console.log(props.grid)
   drawGrid();
 })
 

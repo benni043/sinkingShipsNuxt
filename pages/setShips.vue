@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import {onMounted, ref, type Ref} from 'vue';
 import {socket} from "~/components/socket";
-import type {Cell} from "~/utils/Types";
+import type {Cell, Names} from "~/utils/Types";
+import {useMyGridStore} from "~/stores/myGrid";
 
 // for logging purposes only
 socket.on("connect", () => {
@@ -9,18 +10,28 @@ socket.on("connect", () => {
 });
 
 function startGame() {
-  socket.emit("postField", JSON.stringify(grid.value), "lobby");
+  socket.emit("postField", JSON.stringify(grid.value), "lobby", useCookie("username").value);
 }
 
 socket.on("postFieldSucceeded", () => {
-  emit("startGame", grid.value);
+  useMyGridStore().setGrid(grid.value);
+})
+
+socket.on("starting", (names: Names) => {
+  useMyGridStore().setMyUserName(names.me);
+  useMyGridStore().setOpponentUserName(names.opponent);
+  useMyGridStore().setCurrentPlayer(names.currentPlayer);
+
+  return navigateTo("/game");
 })
 
 socket.on("lobbyIsFull", () => {
-  console.log("this lobby is full!")
+  alert("Diese Runde ist bereits voll!");
 })
 
-const emit = defineEmits(["startGame"]);
+socket.on("playerAlreadyExists", () => {
+  alert("Du bist bereits in dieser Lobby!");
+})
 
 // canvas
 

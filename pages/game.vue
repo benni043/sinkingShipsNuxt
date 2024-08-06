@@ -13,16 +13,14 @@ import SimpleGrid from "~/components/SimpleGrid.vue";
 import {socket} from "~/components/socket";
 import {useMyGridStore} from "~/stores/myGrid";
 
+const myGridStore = useMyGridStore();
+
 const gridSize = 10;
 
-let myGrid: Ref<Cell[][]> = ref(useMyGridStore().grid);
+let myGrid: Ref<Cell[][]> = ref(myGridStore.grid);
 let opponentsGrid: Ref<Cell[][]> = ref(initGrid());
 
 let lobby = "lobby";
-
-let currentPlayer: Ref<string> = ref("");
-let myName: Ref<string> = ref("");
-let opponentName: Ref<string> = ref("");
 
 let stats: Ref<Stats> = ref({lobby: lobby, winner: "", waterHits: -1, playTime: -1});
 let showStats: Ref<boolean> = ref(false);
@@ -64,12 +62,6 @@ function click(cord: Cord) {
   socket.emit("hit", {cord: cord, lobbyName: lobby});
 }
 
-socket.on("starting", (names: Names) => {
-  myName.value = names.me;
-  opponentName.value = names.opponent;
-  currentPlayer.value = names.currentPlayer;
-})
-
 socket.on("hitSucceeded", (hitResponse: HitResponse) => {
   console.log(hitResponse)
 
@@ -93,15 +85,16 @@ socket.on("hitSucceeded", (hitResponse: HitResponse) => {
 
   }
 
-  currentPlayer.value = hitResponse.currentPlayer;
+  myGridStore.setCurrentPlayer(hitResponse.currentPlayer);
 })
 
 socket.on("alreadyHit", () => {
-  console.log("already hit")
+  alert("Auf dieses Feld hast du bereits geschossen!")
 })
 
 socket.on("gameEnd", (winner: string) => {
   stats.value.winner = winner;
+  showStats.value = true;
 })
 
 onBeforeUnmount(() => {
@@ -122,18 +115,18 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div v-if="currentPlayer !== ''" class="current-turn">
-      <h2>{{ currentPlayer }}'s turn</h2>
+    <div v-if="myGridStore.currentPlayer !== ''" class="current-turn">
+      <h2>{{ myGridStore.currentPlayer }}'s turn</h2>
     </div>
 
     <div id="fields">
       <div class="grid-container">
         <div class="player-grid">
-          <h3>{{ myName }}</h3>
+          <h3>{{ myGridStore.myUserName }}</h3>
           <SimpleGrid :grid="myGrid" :has-listener="false"></SimpleGrid>
         </div>
         <div class="player-grid">
-          <h3>{{ opponentName }}</h3>
+          <h3>{{ myGridStore.opponentUserName }}</h3>
           <SimpleGrid :grid="opponentsGrid" :has-listener="true" @clicked="args => click(args)"></SimpleGrid>
 
           <div class="ship-counts">

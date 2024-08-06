@@ -60,6 +60,7 @@ export enum FieldType {
 
 export interface Player {
     socketID: string,
+    username: string,
     gameField: Cell[][]
 }
 
