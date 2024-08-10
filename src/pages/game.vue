@@ -4,13 +4,13 @@ import {
   type Cell,
   type Cord,
   FieldType,
-  type HitResponse, type Names, SHIP,
+  type HitResponse, SHIP,
   type ShipCount,
   ShipType, type Stats, WATER,
 } from "~/utils/Types";
 import {ref, type Ref} from "vue";
 import SimpleGrid from "~/components/SimpleGrid.vue";
-import {socket} from "~/components/socket";
+import {socket} from "~/socket";
 import {useMyGridStore} from "~/stores/myGrid";
 
 const myGridStore = useMyGridStore();
@@ -103,6 +103,9 @@ socket.on("gameEnd", (winner: string) => {
 
 onBeforeUnmount(() => {
   socket.emit("user-disconnect", ({id: socket.id, lobbyName: lobby}));
+
+  socket.removeAllListeners();
+  socket.close();
 });
 
 </script>

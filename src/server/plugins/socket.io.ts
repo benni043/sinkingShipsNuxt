@@ -7,11 +7,7 @@ import {Cell} from "~/utils/Types";
 
 export default defineNitroPlugin((nitroApp: NitroApp) => {
     const engine = new Engine();
-    const io = new Server({
-        cors: {
-            origin: "http://localhost:3000"
-        }
-    });
+    const io = new Server();
 
     io.bind(engine);
 
