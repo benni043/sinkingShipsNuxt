@@ -1,10 +1,8 @@
 <script lang="ts" setup>
 import {onMounted, ref, type Ref} from 'vue';
-import {socket} from "~/socket";
+import {socket} from "~/components/socket";
 import type {Cell, Names} from "~/utils/Types";
 import {useMyGridStore} from "~/stores/myGrid";
-
-socket.connect();
 
 // for logging purposes only
 socket.on("connect", () => {
