@@ -10,7 +10,7 @@ import {
 } from "~/utils/Types";
 import {ref, type Ref} from "vue";
 import SimpleGrid from "~/components/SimpleGrid.vue";
-import {socket} from "~/components/socket";
+import {socket} from "~/socket";
 import {useMyGridStore} from "~/stores/myGrid";
 
 const myGridStore = useMyGridStore();

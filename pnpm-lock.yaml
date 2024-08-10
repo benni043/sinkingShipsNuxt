@@ -8,6 +8,9 @@ dependencies:
   nuxt:
     specifier: ^3.11.2
     version: 3.11.2(@opentelemetry/api@1.8.0)(@unocss/reset@0.60.4)(floating-vue@5.2.2)(unocss@0.60.4)(vite@5.2.13)
+  pinia:
+    specifier: ^2.1.7
+    version: 2.1.7(vue@3.4.27)
   socket.io:
     specifier: ^4.7.5
     version: 4.7.5
@@ -5385,7 +5388,6 @@ packages:
       '@vue/devtools-api': 6.6.3
       vue: 3.4.27
       vue-demi: 0.14.8(vue@3.4.27)
-    dev: true
 
   /pkg-types@1.1.1:
     resolution: {integrity: sha512-ko14TjmDuQJ14zsotODv7dBlwxKhUKQEhuhmbqo1uCi9BB0Z2alo/wAXg6q1dTR5TyuqYyWhjtfe/Tsh+X28jQ==}
